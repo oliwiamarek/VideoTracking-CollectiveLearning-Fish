@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # create a window
     window_name = 'Fishies'
-    cv2.namedWindow(window_name)
+    cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
 
     while cap.isOpened():
 
