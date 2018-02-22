@@ -9,6 +9,7 @@ import numpy as np
 import cv2
 import tkFileDialog
 import os
+import sys
 
 # initialize global variables
 mX, mY = -1, -1
@@ -100,6 +101,7 @@ def visualise_coordinates(fr, fishX, fishY):
 
 
 def write_to_output_file():
+
     with open('output_' + filename + ".csv", 'w') as output_file:
         for n in range(len(fr)):
             output_string = ""
@@ -107,7 +109,7 @@ def write_to_output_file():
             output_string += ", " + str(fishX[n])
             output_string += ", " + str(fishY[n])
             output_string += "\n"
-            variable_file.write(output_string)
+            output_file.write(output_string)
     output_file.close()
 
 
@@ -127,67 +129,70 @@ def write_to_variable_file():
 
 
 if __name__ == "__main__":
-    filepath = ""
-    # ask for video file
-    while not filepath:
-        # restrict to only videos
-        filepath = tkFileDialog.askopenfilename(title="Choose a video file", filetypes=[("Video Files", "*.avi *.mp4")])
-    # get name from path
-    filename = os.path.splitext(os.path.basename(filepath))[0]
+    try:
+        filepath = ""
+        # ask for video file
+        while not filepath:
+            # restrict to only videos
+            filepath = tkFileDialog.askopenfilename(title="Choose a video file", filetypes=[("Video Files", "*.avi *.mp4")])
+        # get name from path
+        filename = os.path.splitext(os.path.basename(filepath))[0]
 
-    cap = cv2.VideoCapture(filepath)
-    print("width = ", cap.get(3))
-    print('height = ', cap.get(4))
-    print('frame rate per second = ', '%.2f' % cap.get(5))
-    print('number of frames = ', cap.get(7))
+        cap = cv2.VideoCapture(filepath)
 
-    # calculate start and stop frames (normalized between 0 and 1)
-    start_frame_no = calculate_frames(cap, 1)
-    stop_frame_no = calculate_frames(cap, 2)
-    print('starting frame number = ', start_frame_no)
-    print('stoping frame number ', stop_frame_no)
+        print('frame rate per second = ' + '%.2f' % cap.get(5))
+        print('number of frames = ' + '%.2f' % cap.get(7))
 
-    # initialize the starting frame of the video object to start_frame_no
-    cap.set(1, start_frame_no)
+        # calculate start and stop frames (normalized between 0 and 1)
+        start_frame_no = calculate_frames(cap, 1)
+        stop_frame_no = calculate_frames(cap, 2)
 
-    # create a window
-    window_name = 'Fishies'
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        # initialize the starting frame of the video object to start_frame_no
+        cap.set(1, start_frame_no)
 
-    while cap.isOpened():
+        # create a window
+        window_name = 'Fishies'
+        # normalize size of the window to every screen
+        cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
-        # read next frame
-        ret, frame = cap.read()
+        while cap.isOpened():
 
-        if ret:  # check if the frame has been read properly
-            while 1:
-                cv2.imshow(window_name, frame)  # show it
-                cv2.putText(frame, 'frame no = ' + str(cap.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                            (0, 255, 0), 2)  # , cv2.LINE_AA) # display the frame number
+            # read next frame
+            ret, frame = cap.read()
+
+            if ret:  # check if the frame has been read properly
+                fr_len = len(fr)
+
+                cv2.putText(frame, 'frame ' + str(cap.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                            (0, 255, 0), 2)  # display the frame number
                 cv2.setMouseCallback(window_name, draw_circle)
-                if cv2.waitKey(1) % 0xFF == ord('n'):
-                    if mX > -1 and mY > -1:
-                        fr.append(cap.get(1))
-                        fishX.append(mX)
-                        fishY.append(mY)
-                        mX, mY = -1, -1
-                        break
-                    else:
-                        cv2.putText(frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                                    (0, 0, 255), 2)  # , cv2.LINE_AA)  # display the frame number
+                while fr_len == len(fr):
+                    cv2.imshow(window_name, frame)  # show it
+                    if cv2.waitKey(1) % 0xFF == ord('n'):
+                        if mX > -1 and mY > -1:
+                            fr.append(cap.get(1))
+                            fishX.append(mX)
+                            fishY.append(mY)
+                            mX, mY = -1, -1
+                        else:
+                            cv2.putText(frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                                        (0, 0, 255), 2)  # display the frame number
 
-            if save_exp_var:
-                save_exp_var = False
-                # select_dipole_and_food()
+                if save_exp_var:
+                    save_exp_var = False
+                    # select_dipole_and_food()
 
-                # write_to_variable_file()
+                    # write_to_variable_file()
 
-        if cap.get(1) > stop_frame_no:
-            break
+            if cap.get(1) > stop_frame_no:
+                break
 
-    exit_program(cap)
+        exit_program(cap)
 
-    # write digitized coordinates into an output file
-    write_to_output_file()
+        # write digitized coordinates into an output file
+        write_to_output_file()
 
-    visualise_coordinates(fr, fishX, fishY)
+        visualise_coordinates(fr, fishX, fishY)
+    except:
+        print ("Unexpected error:", sys.exc_info()[0])
+        raise
