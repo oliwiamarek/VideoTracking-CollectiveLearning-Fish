@@ -79,8 +79,9 @@ def select_dipole_and_food():
 
 
 if __name__ == "__main__":
+
     #ask for video file
-    filepath = tkFileDialog.askopenfilename()
+    filepath = tkFileDialog.askopenfilename(title="Choose a video file", filetypes=[("Video Files", "*.avi *.mp4")])
     filename = os.path.splitext(os.path.basename(filepath))[0]
 
     cap = cv2.VideoCapture(filepath)
@@ -130,8 +131,7 @@ if __name__ == "__main__":
                 #select_dipole_and_food()
 
                 #TODO refactor
-                #TODO name based on file opened
-                with open("GOPR2715_exp_var.csv", 'w') as out_file:
+                with open('output' + filename, 'w') as out_file:
                     out_string = "video width" + ", " + str(cap.get(3)) + "\n"
                     out_file.write(out_string)
                     out_string = "video height" + ", " + str(cap.get(4)) + "\n"
@@ -168,7 +168,7 @@ if __name__ == "__main__":
     exit_program(cap)
 
     # write digitized coordinates into an output file
-    with open("GOPR2715_output_data.csv", 'w') as out_file:
+    with open('output' + filename + ".csv", 'w') as out_file:
         for n in range(len(fr)):
             out_string = ""
             out_string += str(fr[n])
@@ -176,9 +176,9 @@ if __name__ == "__main__":
             out_string += ", " + str(fishY[n])
             out_string += "\n"
             out_file.write(out_string)
-        out_file.close()
+    out_file.close()
 
-while 1:
+
     # visualize coordinates
     plt.figure()
     plt.plot(fr, fishX, 'k')
@@ -192,7 +192,7 @@ while 1:
 
     plt.figure()
     plt.plot(fishX, fishY, 'k')
-    plt.xlabel('x-coordinate (pixel)')
     plt.ylabel('y-coordinate (pixel)')
+    plt.xlabel('x-coordinate (pixel)')
 
-    plt.show()
+    #plt.show()
