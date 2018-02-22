@@ -195,4 +195,4 @@ if __name__ == "__main__":
     plt.ylabel('y-coordinate (pixel)')
     plt.xlabel('x-coordinate (pixel)')
 
-    #plt.show()
+    plt.show(block=True)
