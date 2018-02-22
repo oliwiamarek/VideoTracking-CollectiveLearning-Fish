@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import tkFileDialog
+from Tkinter import Tk
 import os
 import sys
 
@@ -104,12 +105,7 @@ def write_to_output_file():
 
     with open('output_' + filename + ".csv", 'w') as output_file:
         for n in range(len(fr)):
-            output_string = ""
-            output_string += str(fr[n])
-            output_string += ", " + str(fishX[n])
-            output_string += ", " + str(fishY[n])
-            output_string += "\n"
-            output_file.write(output_string)
+            output_file.write("{0}, {1}, {2} \n".format(fr[n], fishX[n], fishY[n]))
     output_file.close()
 
 
@@ -131,6 +127,8 @@ def write_to_variable_file():
 if __name__ == "__main__":
     try:
         filepath = ""
+        root = Tk()
+        root.withdraw()
         # ask for video file
         while not filepath:
             # restrict to only videos
