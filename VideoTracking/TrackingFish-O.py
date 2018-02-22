@@ -7,12 +7,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import tkFileDialog
+import os
 
 # initialize global variables
-start_time_minute = 0
-start_time_seconds = 1
-stop_time_minute = 0
-stop_time_seconds = 3
 mX, mY = -1, -1
 fr, fishX, fishY = [], [], []
 save_exp_var = True
@@ -26,8 +24,8 @@ def draw_circle(event, x, y, flags, param):
         mX, mY = x, y
 
 
-def calculate_frames(capture, minute, seconds):
-    return int((minute * 60 + seconds) * capture.get(5))
+def calculate_frames(capture, seconds):
+    return int(seconds * capture.get(5))
 
 
 def exit_program(capture):
@@ -35,18 +33,65 @@ def exit_program(capture):
     cv2.destroyAllWindows()
 
 
-if __name__ == "__main__":
+def select_dipole_and_food():
+    global mX, mY
+    count = 0
+    while 1:
 
-    # TODO Create a "choose file" button instead of fixed input
-    cap = cv2.VideoCapture("June28_1.mp4")
+        cv2.imshow(window_name, frame)  # show it
+
+        cv2.putText(frame, 'Click for Light Source and Cylinder', (130, 180),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
+                    2)  # , cv2.LINE_AA) # display the frame number
+
+        cv2.setMouseCallback(window_name, draw_circle)
+        if cv2.waitKey(1) % 0xFF == ord('n'):
+            if mX > -1 and mY > -1:
+                locX[count] = mX
+                locY[count] = mY
+                mX, mY = -1, -1
+
+                count += 1
+                if count == 1:
+                    cv2.putText(frame, 'Light center = ' + str(locX[0]) + ', ' + str(locY[0]), (130, 230),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
+                                2)  # , cv2.LINE_AA) # display the frame number
+                elif count == 2:
+                    cv2.putText(frame, 'Light edge = ' + str(locX[1]) + ', ' + str(locY[1]), (130, 280),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
+                                2)  # , cv2.LINE_AA) # display the frame number
+                elif count == 3:
+                    cv2.putText(frame, 'Food ring center = ' + str(locX[2]) + ', ' + str(locY[2]),
+                                (130, 330),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
+                                2)  # , cv2.LINE_AA) # display the frame number
+                elif count == 4:
+                    cv2.putText(frame, 'Food ring edge edge = ' + str(locX[3]) + ', ' + str(locY[3]),
+                                (130, 380),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
+                                2)  # , cv2.LINE_AA) # display the frame number
+
+                if count > 3:
+                    break
+            else:
+                cv2.putText(frame, 'Please first click on a point', (830, 180), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                            (0, 0, 255), 2)  # , cv2.LINE_AA)  # display the frame number
+
+
+if __name__ == "__main__":
+    #ask for video file
+    filepath = tkFileDialog.askopenfilename()
+    filename = os.path.splitext(os.path.basename(filepath))[0]
+
+    cap = cv2.VideoCapture(filepath)
     print("width = ", cap.get(3))
     print('height = ', cap.get(4))
     print('frame rate per second = ', '%.2f' % cap.get(5))
     print('number of frames = ', cap.get(7))
 
     # calculate start and stop frames (normalized between 0 and 1)
-    start_frame_no = calculate_frames(cap, start_time_minute, start_time_seconds)
-    stop_frame_no = calculate_frames(cap, stop_time_minute, stop_time_seconds)
+    start_frame_no = calculate_frames(cap, 1)
+    stop_frame_no = calculate_frames(cap, 2)
     print('starting frame number = ', start_frame_no)
     print('stoping frame number ', stop_frame_no)
 
@@ -55,7 +100,7 @@ if __name__ == "__main__":
 
     # create a window
     window_name = 'Fishies'
-    cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
     while cap.isOpened():
 
@@ -81,61 +126,12 @@ if __name__ == "__main__":
                                     (0, 0, 255), 2)  # , cv2.LINE_AA)  # display the frame number
 
             if save_exp_var:
-
                 save_exp_var = False
-
-                count = 0
-                while 1:
-
-                    cv2.imshow(window_name, frame)  # show it
-
-                    cv2.putText(frame, 'Click for Light Source and Cylinder', (130, 180),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255),
-                                2)  # , cv2.LINE_AA) # display the frame number
-
-                    cv2.setMouseCallback(window_name, draw_circle)
-                    if cv2.waitKey(1) % 0xFF == ord('n'):
-                        if mX > -1 and mY > -1:
-                            locX[count] = mX
-                            locY[count] = mY
-                            mX, mY = -1, -1
-
-                            count += 1
-                            if count == 1:
-                                cv2.putText(frame, 'Light center = ' + str(locX[0]) + ', ' + str(locY[0]), (130, 230),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
-                                            2)  # , cv2.LINE_AA) # display the frame number
-                            elif count == 2:
-                                cv2.putText(frame, 'Light edge = ' + str(locX[1]) + ', ' + str(locY[1]), (130, 280),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
-                                            2)  # , cv2.LINE_AA) # display the frame number
-                            elif count == 3:
-                                cv2.putText(frame, 'Food ring center = ' + str(locX[2]) + ', ' + str(locY[2]),
-                                            (130, 330),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
-                                            2)  # , cv2.LINE_AA) # display the frame number
-                            elif count == 4:
-                                cv2.putText(frame, 'Food ring edge edge = ' + str(locX[3]) + ', ' + str(locY[3]),
-                                            (130, 380),
-                                            cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0),
-                                            2)  # , cv2.LINE_AA) # display the frame number
-
-                            if count > 3:
-                                break
-                        else:
-                            cv2.putText(frame, 'Please first click on a point', (830, 180), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                                        (0, 0, 255), 2)  # , cv2.LINE_AA)  # display the frame number
+                #select_dipole_and_food()
 
                 #TODO refactor
+                #TODO name based on file opened
                 with open("GOPR2715_exp_var.csv", 'w') as out_file:
-                    out_string = "start_time_minute" + ", " + str(start_time_minute) + "\n"
-                    out_file.write(out_string)
-                    out_string = "start_time_seconds" + ", " + str(start_time_seconds) + "\n"
-                    out_file.write(out_string)
-                    out_string = "stop_time_minute" + ", " + str(stop_time_minute) + "\n"
-                    out_file.write(out_string)
-                    out_string = "stop_time_seconds" + ", " + str(stop_time_seconds) + "\n"
-                    out_file.write(out_string)
                     out_string = "video width" + ", " + str(cap.get(3)) + "\n"
                     out_file.write(out_string)
                     out_string = "video height" + ", " + str(cap.get(4)) + "\n"
@@ -180,8 +176,9 @@ if __name__ == "__main__":
             out_string += ", " + str(fishY[n])
             out_string += "\n"
             out_file.write(out_string)
-            out_file.close()
+        out_file.close()
 
+while 1:
     # visualize coordinates
     plt.figure()
     plt.plot(fr, fishX, 'k')
