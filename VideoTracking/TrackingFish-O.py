@@ -78,10 +78,61 @@ def select_dipole_and_food():
                             (0, 0, 255), 2)  # , cv2.LINE_AA)  # display the frame number
 
 
-if __name__ == "__main__":
+def visualise_coordinates(fr, fishX, fishY):
+    # visualize coordinates
+    plt.figure()
+    plt.plot(fr, fishX, 'k')
+    plt.title('X Coordinates visualisation')
+    plt.xlabel('frame number')
+    plt.ylabel('x-coordinate (pixel)')
+    plt.figure()
+    plt.plot(fr, fishY, 'k')
+    plt.title('Y Coordinates visualisation')
+    plt.xlabel('frame number')
+    plt.ylabel('y-coordinate (pixel)')
+    plt.figure()
+    plt.plot(fishX, fishY, 'k')
+    plt.title('X and Y Coordinates')
+    plt.ylabel('y-coordinate (pixel)')
+    plt.xlabel('x-coordinate (pixel)')
+    # Block=true prevents the graphs from closing immediately
+    plt.show(block=True)
 
-    #ask for video file
-    filepath = tkFileDialog.askopenfilename(title="Choose a video file", filetypes=[("Video Files", "*.avi *.mp4")])
+
+def write_to_output_file():
+    with open('output_' + filename + ".csv", 'w') as output_file:
+        for n in range(len(fr)):
+            output_string = ""
+            output_string += str(fr[n])
+            output_string += ", " + str(fishX[n])
+            output_string += ", " + str(fishY[n])
+            output_string += "\n"
+            variable_file.write(output_string)
+    output_file.close()
+
+
+# TODO Delete?
+def write_to_variable_file():
+    global variable_file
+    with open('variables_' + filename + ".csv", 'w') as variable_file:
+        out_string = "video width" + ", " + str(cap.get(3)) + "\n"
+        variable_file.write(out_string)
+        out_string = "video height" + ", " + str(cap.get(4)) + "\n"
+        variable_file.write(out_string)
+        out_string = "frame rate" + ", " + str(cap.get(5)) + "\n"
+        variable_file.write(out_string)
+        out_string = "number of frames" + ", " + str(cap.get(7)) + "\n"
+        variable_file.write(out_string)
+        variable_file.close()
+
+
+if __name__ == "__main__":
+    filepath = ""
+    # ask for video file
+    while not filepath:
+        # restrict to only videos
+        filepath = tkFileDialog.askopenfilename(title="Choose a video file", filetypes=[("Video Files", "*.avi *.mp4")])
+    # get name from path
     filename = os.path.splitext(os.path.basename(filepath))[0]
 
     cap = cv2.VideoCapture(filepath)
@@ -108,7 +159,6 @@ if __name__ == "__main__":
         # read next frame
         ret, frame = cap.read()
 
-        #TODO get rid of while 1
         if ret:  # check if the frame has been read properly
             while 1:
                 cv2.imshow(window_name, frame)  # show it
@@ -128,39 +178,9 @@ if __name__ == "__main__":
 
             if save_exp_var:
                 save_exp_var = False
-                #select_dipole_and_food()
+                # select_dipole_and_food()
 
-                #TODO refactor
-                with open('output' + filename, 'w') as out_file:
-                    out_string = "video width" + ", " + str(cap.get(3)) + "\n"
-                    out_file.write(out_string)
-                    out_string = "video height" + ", " + str(cap.get(4)) + "\n"
-                    out_file.write(out_string)
-                    out_string = "frame rate" + ", " + str(cap.get(5)) + "\n"
-                    out_file.write(out_string)
-                    out_string = "number of frames" + ", " + str(cap.get(7)) + "\n"
-                    out_file.write(out_string)
-                    out_string = "start frame no" + ", " + str(start_frame_no) + "\n"
-                    out_file.write(out_string)
-                    out_string = "stop frame no" + ", " + str(stop_frame_no) + "\n"
-                    out_file.write(out_string)
-                    out_string = "light center x-coordinate" + ", " + str(locX[0]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "light center y-coordinate" + ", " + str(locY[0]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "light edge x-coordinate" + ", " + str(locX[1]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "light edge y-coordinate" + ", " + str(locY[1]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "food ring center x-coordinate" + ", " + str(locX[2]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "food ring center y-coordinate" + ", " + str(locY[2]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "food ring edge x-coordinate" + ", " + str(locX[3]) + "\n"
-                    out_file.write(out_string)
-                    out_string = "food ring edge y-coordinate" + ", " + str(locY[3]) + "\n"
-                    out_file.write(out_string)
-                    out_file.close()
+                # write_to_variable_file()
 
         if cap.get(1) > stop_frame_no:
             break
@@ -168,31 +188,6 @@ if __name__ == "__main__":
     exit_program(cap)
 
     # write digitized coordinates into an output file
-    with open('output' + filename + ".csv", 'w') as out_file:
-        for n in range(len(fr)):
-            out_string = ""
-            out_string += str(fr[n])
-            out_string += ", " + str(fishX[n])
-            out_string += ", " + str(fishY[n])
-            out_string += "\n"
-            out_file.write(out_string)
-    out_file.close()
+    write_to_output_file()
 
-
-    # visualize coordinates
-    plt.figure()
-    plt.plot(fr, fishX, 'k')
-    plt.xlabel('frame number')
-    plt.ylabel('x-coordinate (pixel)')
-
-    plt.figure()
-    plt.plot(fr, fishY, 'k')
-    plt.xlabel('frame number')
-    plt.ylabel('y-coordinate (pixel)')
-
-    plt.figure()
-    plt.plot(fishX, fishY, 'k')
-    plt.ylabel('y-coordinate (pixel)')
-    plt.xlabel('x-coordinate (pixel)')
-
-    plt.show(block=True)
+    visualise_coordinates(fr, fishX, fishY)
