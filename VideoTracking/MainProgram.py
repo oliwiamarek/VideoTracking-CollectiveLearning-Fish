@@ -13,25 +13,15 @@ import FishTracker
 '''
 GLOBAL FUNCTIONS 
 '''
-mX, mY = -1, -1
-frame = 0
 stop_frame_no = 0
 
 
 def calculate_frames(capture, seconds):
-    return int(seconds * capture.get(5))
-
-
-def close_capture_window(capture):
-    capture.release()
-    cv2.destroyAllWindows()
-
-
-def draw_point(event, x, y, flags, params):
-    global mX, mY
-    if event == cv2.EVENT_LBUTTONDOWN:
-        cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
-        mX, mY = x, y
+    try:
+        return int(seconds * capture.get(5))
+    except TypeError:
+        print("Cannot calculate frames due to wrong values: seconds: {0}, capture: {1}".format(seconds, capture.get(5)))
+        raise
 
 
 def calculate_video_duration():
@@ -44,63 +34,34 @@ def calculate_video_duration():
     cap.set(1, start_frame_no)
 
 
-def track_fish():
-    global mY, mX, frame
-    # read next frame
-    ret, frame = cap.read()
+def print_frame_rate():
+    try:
+        print('frame rate per second = ' + '%.2f' % cap.get(5))
+        print('number of frames = ' + '%.2f' % cap.get(7))
+    except TypeError:
+        print("Capture.get returned type different to int")
+        raise
 
-    if ret:  # check if the frame has been read properly
-        fr_len = len(tracker.fr)
 
-        # display the frame number
-        cv2.putText(frame, 'frame ' + str(cap.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    (0, 255, 0), 2)
-        # clicking at fish adds a circular point - has to be outside the while loop
-        cv2.setMouseCallback(tracker.window_name, draw_point)
-
-        '''https://www.learnopencv.com/read-write-and-display-a-video-using-opencv-cpp-python/ After reading 
-        a video file, we can display the video frame by frame. A frame of a video is simply an image and we 
-        display each frame the same way we display images, i.e., we use the function imshow(). As in the case 
-        of an image, we use the waitKey() after imshow() function to pause each frame in the video. In the 
-        case of an image, we pass ‘0’ to the waitKey() function, but for playing a video, we need to pass a 
-        number greater than ‘0’ to the waitKey() function. This is because ‘0’ would pause the frame in the 
-        video for an infinite amount of time and in a video we need each frame to be shown only for some 
-        finite interval of time, so we need to pass a number greater than ‘0’ to the waitKey() function. This 
-        number is equal to the time in milliseconds we want each frame to be displayed. While reading the 
-        frames from a webcam, using waitKey(1) is appropriate because the display frame rate will be limited 
-        by the frame rate of the webcam even if we specify a delay of 1 ms in waitKey. While reading frames 
-        from a video that you are processing, it may still be appropriate to set the time delay to 1 ms so 
-        that the thread is freed up to do the processing we want to do. '''
-        while fr_len == len(tracker.fr):
-            cv2.imshow(tracker.window_name, frame)  # show it
-            if cv2.waitKey(1) % 0xFF == ord('n'):
-                if mX > -1 and mY > -1:
-                    tracker.fr.append(cap.get(1))
-                    tracker.fishX.append(mX)
-                    tracker.fishY.append(mY)
-                    mX, mY = -1, -1
-                else:
-                    cv2.putText(frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                                (0, 0, 255), 2)  # display the frame number
+# TODO move to Fish tracer and make the filepath private
+def get_name_from_path():
+    try:
+        return os.path.splitext(os.path.basename(tracker.video_filepath))[0]
+    except TypeError:
+        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(tracker.video_filepath))
+        raise
 
 
 '''
 MAIN FUNCTION
 '''
 
-
-def print_frame_rate():
-    print('frame rate per second = ' + '%.2f' % cap.get(5))
-    print('number of frames = ' + '%.2f' % cap.get(7))
-
-
 if __name__ == "__main__":
     try:
         tracker = FishTracker.FishTracker()
 
         tracker.get_video_file()
-        # get name from path
-        filename = os.path.splitext(os.path.basename(tracker.video_filepath))[0]
+        filename = get_name_from_path()
 
         cap = cv2.VideoCapture(tracker.video_filepath)
 
@@ -110,11 +71,11 @@ if __name__ == "__main__":
         tracker.create_record_window()
 
         while cap.isOpened():
-            track_fish()
+            tracker.track_fish(cap)
             if cap.get(1) > stop_frame_no:
                 break
 
-        close_capture_window(cap)
+        tracker.close_capture_window(cap)
 
         tracker.write_to_output_file(filename)
         tracker.visualise_coordinates()
