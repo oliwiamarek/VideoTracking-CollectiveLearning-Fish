@@ -36,28 +36,13 @@ def draw_circle(event, x, y, flags, params):
         mX, mY = x, y
 
 
-# TODO Delete?
-def write_to_variable_file():
-    global variable_file
-    with open('variables_' + filename + ".csv", 'w') as variable_file:
-        out_string = "video width" + ", " + str(cap.get(3)) + "\n"
-        variable_file.write(out_string)
-        out_string = "video height" + ", " + str(cap.get(4)) + "\n"
-        variable_file.write(out_string)
-        out_string = "frame rate" + ", " + str(cap.get(5)) + "\n"
-        variable_file.write(out_string)
-        out_string = "number of frames" + ", " + str(cap.get(7)) + "\n"
-        variable_file.write(out_string)
-        variable_file.close()
-
-
 '''
 MAIN FUNCTION
 '''
 
 if __name__ == "__main__":
     try:
-        tracker = FishTracker.Poop()
+        tracker = FishTracker.FishTracker()
 
         tracker.get_video_file()
         # get name from path
@@ -70,7 +55,7 @@ if __name__ == "__main__":
 
         # calculate start and stop frames (normalized between 0 and 1)
         start_frame_no = calculate_frames(cap, 1)
-        stop_frame_no = calculate_frames(cap, 1)
+        stop_frame_no = calculate_frames(cap, 2)
 
         # initialize the starting frame of the video object to start_frame_no
         cap.set(1, start_frame_no)

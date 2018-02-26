@@ -8,7 +8,7 @@ FISH TRACKER CLASS
 """
 
 
-class Poop (object):
+class FishTracker (object):
     def __init__(self):
         # initialize global variables
         self.mX, self.mY = -1, -1
