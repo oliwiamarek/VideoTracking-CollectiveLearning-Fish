@@ -27,7 +27,7 @@ def close_capture_window(capture):
     cv2.destroyAllWindows()
 
 
-def draw_circle(event, x, y, flags, params):
+def draw_point(event, x, y, flags, params):
     global mX, mY
     if event == cv2.EVENT_LBUTTONDOWN:
         cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
@@ -56,7 +56,7 @@ def track_fish():
         cv2.putText(frame, 'frame ' + str(cap.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
                     (0, 255, 0), 2)
         # clicking at fish adds a circular point - has to be outside the while loop
-        cv2.setMouseCallback(tracker.window_name, draw_circle)
+        cv2.setMouseCallback(tracker.window_name, draw_point)
 
         '''https://www.learnopencv.com/read-write-and-display-a-video-using-opencv-cpp-python/ After reading 
         a video file, we can display the video frame by frame. A frame of a video is simply an image and we 
