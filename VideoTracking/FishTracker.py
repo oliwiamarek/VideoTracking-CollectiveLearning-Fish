@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import tkFileDialog
@@ -8,7 +9,7 @@ FISH TRACKER CLASS
 """
 
 
-class FishTracker (object):
+class FishTracker(object):
     def __init__(self):
         # initialize global variables
         self.mX, self.mY = -1, -1
@@ -16,12 +17,14 @@ class FishTracker (object):
         self.save_exp_var = True
         self.locX, self.locY = np.empty(4), np.zeros(4)
         self.video_filepath = ""
+        self.window_name = ""
 
     def visualise_coordinates(self):
         # visualize coordinates
         self.create_figure(self.fr, self.fishX, 'X Coordinates visualisation', 'frame number', 'x-coordinate (pixel)')
         self.create_figure(self.fr, self.fishY, 'Y Coordinates visualisation', 'frame number', 'y-coordinate (pixel)')
-        self.create_figure(self.fishX, self.fishY, 'X and Y Coordinates', 'y-coordinate (pixel)', 'x-coordinate (pixel)')
+        self.create_figure(self.fishX, self.fishY, 'X and Y Coordinates', 'y-coordinate (pixel)',
+                           'x-coordinate (pixel)')
         # Block=true prevents the graphs from closing immediately
         plt.show(block=True)
 
@@ -48,6 +51,7 @@ class FishTracker (object):
 
     def write_to_output_file(self, filename):
         """
+        Write digitized coordinates into an output file
         :type filename: str
         """
         with open('Outputs\\output_{0}.csv'.format(filename), 'w') as output_file:
@@ -63,6 +67,9 @@ class FishTracker (object):
         while not self.video_filepath:
             # restrict to only videos
             self.video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
-                                                    filetypes=[("Video Files", "*.avi *.mp4")])
+                                                               filetypes=[("Video Files", "*.avi *.mp4")])
 
-
+    def create_record_window(self):
+        self.window_name = 'Fishies'
+        # normalize size of the window to every screen
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
