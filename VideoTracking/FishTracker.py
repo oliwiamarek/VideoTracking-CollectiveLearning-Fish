@@ -7,12 +7,14 @@ from Tkinter import Tk
 """
 FISH TRACKER CLASS
 """
+n_rows = 2
+n_columns = 3
 
 
 class FishTracker(object):
     def __init__(self):
         self.mouse_x, self.mouse_y = -1, -1
-        self.frame_no = 0
+        self.current_frame = 0
         self.frame_no_array, self.fish_x, self.fish_y = [], [], []
         self.save_exp_var = True
         self.locX, self.locY = np.empty(4), np.zeros(4)
@@ -21,8 +23,10 @@ class FishTracker(object):
 
     def visualise_coordinates(self):
         # visualize coordinates
-        self.create_figure(self.frame_no_array, self.fish_x, 'X Coordinates visualisation', 'frame number', 'x-coordinate (pixel)')
-        self.create_figure(self.frame_no_array, self.fish_y, 'Y Coordinates visualisation', 'frame number', 'y-coordinate (pixel)')
+        self.create_figure(self.frame_no_array, self.fish_x, 'X Coordinates visualisation', 'frame number',
+                           'x-coordinate (pixel)')
+        self.create_figure(self.frame_no_array, self.fish_y, 'Y Coordinates visualisation', 'frame number',
+                           'y-coordinate (pixel)')
         self.create_figure(self.fish_x, self.fish_y, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
         # Block=true prevents the graphs from closing immediately
@@ -59,6 +63,8 @@ class FishTracker(object):
                 output_file.write("{0}, {1}, {2} \n".format(self.frame_no_array[n], self.fish_x[n], self.fish_y[n]))
         output_file.close()
 
+        # plot trajectories function
+
     def get_video_file(self):
         # hides the Tk window
         root = Tk()
@@ -76,22 +82,36 @@ class FishTracker(object):
 
     def track_fish(self, capture):
         # read next frame
-        ret, self.frame_no = capture.read()
+        ret, self.current_frame = capture.read()
 
         if ret:  # check if the frame has been read properly
             fr_len = len(self.frame_no_array)
 
-            self.display_frame_number(self.frame_no, capture)
+            self.display_frame_number(self.current_frame, capture)
             # clicking at fish adds a circular point - has to be outside the while loop
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
             while fr_len == len(self.frame_no_array):
-                cv2.imshow(self.window_name, self.frame_no)  # show it
+                cv2.imshow(self.window_name, self.current_frame)  # show it
                 self.track_fish_through_frames(capture)
+
+    def roi_video(self):
+        height, width, ch = self.current_frame.shape
+        roi_height = height / n_rows
+        roi_width = width / n_columns
+
+        images = []
+        for vid_height in range(0, n_rows):
+            for vid_width in range(0, n_columns):
+                tmp_image = self.current_frame[
+                            vid_height * roi_height: (vid_height + 1) * roi_height,
+                            vid_width * roi_width:(vid_width + 1) * roi_width
+                            ]
+                images.append(tmp_image)
 
     def draw_point(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
-            cv2.circle(self.frame_no, (x, y), 5, (0, 255, 0), -1)
+            cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
             self.mouse_x, self.mouse_y = x, y
 
     @staticmethod
@@ -107,7 +127,7 @@ class FishTracker(object):
                 self.fish_y.append(self.mouse_y)
                 self.mouse_x, self.mouse_y = -1, -1  # reset mouse coordinates
             else:
-                cv2.putText(self.frame_no, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                cv2.putText(self.current_frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
                             (0, 0, 255), 2)  # display the frame number
 
     @staticmethod
