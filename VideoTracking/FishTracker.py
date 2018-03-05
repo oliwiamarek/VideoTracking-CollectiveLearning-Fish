@@ -18,7 +18,7 @@ class FishTracker(object):
         self.mouse_x_list, self.mouse_y_list, self.fish_number_list = [], [], []
         self.frame_no_list, self.fish_x, self.fish_y = [], [], []
         self.fish_no_dict = {}
-        self.current_frame = 0
+        self.current_frame, self.previous_frame = {}, {}
         self.video_filepath = ""
         self.window_name = "Fishies"
 
@@ -92,6 +92,7 @@ class FishTracker(object):
         # read next frame
         ret, frame = capture.read()
         self.current_frame = frame
+        self.previous_frame = self.current_frame.copy()
         # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         self.roi_video()
@@ -99,7 +100,7 @@ class FishTracker(object):
         if ret:  # check if the frame has been read properly
             fr_len = len(self.frame_no_list)
 
-            self.display_frame_number(self.current_frame, capture)
+            self.display_frame_text(self.current_frame, capture)
             # clicking at fish adds a circular point - has to be outside the while loop
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
@@ -146,16 +147,23 @@ class FishTracker(object):
             else:
                 output_file.write('{0}, {1} \n'.format(key, value))
 
+    # todo remove the point if pressed sth
+    # allows removing once!!
     def draw_point(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
+            self.previous_frame = self.current_frame.copy()
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
             self.mouse_x_list.append(x)
             self.mouse_y_list.append(y)
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            self.current_frame = self.previous_frame.copy()
+            del self.mouse_x_list[-1]
+            del self.mouse_y_list[-1]
 
-    @staticmethod
-    def display_frame_number(frame_no, capture):
+    def display_frame_text(self, frame_no, capture):
         cv2.putText(frame_no, 'frame ' + str(capture.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
                     (0, 255, 0), 2)
+        cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     def track_fish_through_frames(self, capture):
         if cv2.waitKey(1) % 0xFF == ord('n'):  # press n to get to next frame
