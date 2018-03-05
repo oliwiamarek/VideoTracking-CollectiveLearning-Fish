@@ -15,8 +15,7 @@ class FishTracker(object):
         # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
-        self.mouse_x_list, self.mouse_y_list = [], []
-        self.frame_no_list, self.all_fish_x_list, self.all_fish_y_list = [], [], []
+        self.current_frame_fish_coord, self.frame_no_list, self.all_fish_coord_list = [], [], []
         self.fish_no_dict = {}
         self.current_frame, self.previous_frame = {}, {}
         self.video_filepath = ""
@@ -63,8 +62,8 @@ class FishTracker(object):
         output_filename = 'Outputs\\output_{0}.csv'.format(filename)
         try:
             with open(output_filename, 'w') as output_file:
-                for fish_no in range(len(self.all_fish_x_list)):
-                    output_file.write('{0}, {1} \n'.format(self.all_fish_x_list[fish_no], self.all_fish_y_list[fish_no]))
+                for fish_no in range(len(self.all_fish_coord_list)):
+                    output_file.write('{0} \n'.format(self.all_fish_coord_list[fish_no]))
 
             output_file.close()
             print("Wrote the outputs")
@@ -153,12 +152,10 @@ class FishTracker(object):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.previous_frame = self.current_frame.copy()
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.mouse_x_list.append(x)
-            self.mouse_y_list.append(y)
+            self.current_frame_fish_coord.append('{0}, {1}'.format(x, y))
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.current_frame = self.previous_frame.copy()
-            del self.mouse_x_list[-1]
-            del self.mouse_y_list[-1]
+            del self.current_frame_fish_coord[-1]
 
     def display_frame_text(self, frame, capture):
         self.frame_no = capture.get(1)
@@ -167,29 +164,33 @@ class FishTracker(object):
         cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
     def track_fish_through_frames(self, capture):
-        if cv2.waitKey(1) % 0xFF == ord('n'):  # press n to get to next frame
-            if 0 < len(self.mouse_x_list) and not [] == self.mouse_y_list[-1:]:  # check if mouse clicked
+        # press n to get to next frame
+        if cv2.waitKey(1) % 0xFF == ord('n'):
+            #  check if mouse clicked
+            if 0 < len(self.current_frame_fish_coord):
                 self.frame_no_list.append(capture.get(1))
                 self.update_fish_variables()
             else:
-                cv2.putText(self.current_frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX,
-                            1,
-                            (0, 0, 255), 2)  # display the frame number
+                # display the frame number
+                cv2.putText(self.current_frame, 'Please first click on a point', (830, 130),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     def update_fish_variables(self):
         # todo check which roi is the fish in
-        fish_no = len(self.mouse_x_list)
+        fish_no = len(self.current_frame_fish_coord)
         self.fish_no_dict[self.frame_no] = fish_no
+        # self.fish_no_dict[self.roi] = ['frame': self.frame_no, 'no_fish': fish_no]
 
         # add all of coordinates to the list to be printed with a new line to separate the frames
-        self.all_fish_x_list.extend(self.mouse_x_list)
-        self.all_fish_y_list.extend(self.mouse_y_list)
-        self.all_fish_x_list.append(" ")
-        self.all_fish_y_list.append(" ")
+        self.all_fish_coord_list.extend(self.current_frame_fish_coord)
+        self.all_fish_coord_list.append(" ")
+
         # reset mouse coordinates
-        del self.mouse_x_list[:]
-        del self.mouse_y_list[:]
-        # another option is self.mouse_x_list[:] = []
+        del self.current_frame_fish_coord[:]
+
+    # # todo add dict of roi
+    # def check_which_ROI(self):
+    #     for fish_x in self.mouse_x_list:
 
     @staticmethod
     def close_capture_window(capture):
