@@ -1,9 +1,7 @@
 # coding=utf-8
-# Otar Akanyeti
-# 16 July 2017
 # Oliwia Marek
 # 18 February 2018
-# This program enables the user to digitize fish position manually
+# This program enables the user to digitize fish position
 
 import cv2
 import os
@@ -78,7 +76,8 @@ if __name__ == "__main__":
         tracker.close_capture_window(cap)
 
         tracker.write_to_output_file(filename)
-        tracker.visualise_coordinates()
+        tracker.write_no_fish_to_file(filename)
+        # tracker.visualise_coordinates()
     except:
         print ("Unexpected error:", sys.exc_info()[0])
         raise

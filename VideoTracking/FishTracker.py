@@ -1,5 +1,4 @@
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 import tkFileDialog
 from Tkinter import Tk
@@ -13,19 +12,22 @@ n_columns = 3
 
 class FishTracker(object):
     def __init__(self):
-        self.mouse_x_array, self.mouse_y_array, self.fish_number_array = [], [], []
+        # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
+        # fish_x, fish_y - lists to hold coordinates of all fish in all frames
+        # TODO delete: fish_number_list
+        self.mouse_x_list, self.mouse_y_list, self.fish_number_list = [], [], []
+        self.frame_no_list, self.fish_x, self.fish_y = [], [], []
+        self.fish_no_dict = {}
         self.current_frame = 0
-        self.frame_no_array, self.fish_x, self.fish_y = [], [], []
-        self.save_exp_var = True
-        self.locX, self.locY = np.empty(4), np.zeros(4)
         self.video_filepath = ""
-        self.window_name = ""
+        self.window_name = "Fishies"
 
+    # TODO FIX
     def visualise_coordinates(self):
         # visualize coordinates
-        self.create_figure(self.frame_no_array, self.fish_x, 'X Coordinates visualisation', 'frame number',
+        self.create_figure(self.frame_no_list, self.fish_x, 'X Coordinates visualisation', 'frame number',
                            'x-coordinate (pixel)')
-        self.create_figure(self.frame_no_array, self.fish_y, 'Y Coordinates visualisation', 'frame number',
+        self.create_figure(self.frame_no_list, self.fish_y, 'Y Coordinates visualisation', 'frame number',
                            'y-coordinate (pixel)')
         self.create_figure(self.fish_x, self.fish_y, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
@@ -58,13 +60,18 @@ class FishTracker(object):
         Write digitized coordinates into an output file
         :type filename: str
         """
-        with open('Outputs\\output_{0}.csv'.format(filename), 'w') as output_file:
-            for fish_no in range(len(self.fish_x)):
-                output_file.write('{0}, {1} \n'.format(self.fish_x[fish_no], self.fish_y[fish_no]))
+        output_filename = 'Outputs\\output_{0}.csv'.format(filename)
+        try:
+            with open(output_filename, 'w') as output_file:
+                for fish_no in range(len(self.fish_x)):
+                    output_file.write('{0}, {1} \n'.format(self.fish_x[fish_no], self.fish_y[fish_no]))
 
-        output_file.close()
+            output_file.close()
 
-        # plot trajectories function
+        except IOError as e:
+            print("Unable to write to a file {0}. Writing to a new file. ({1})"
+                  .format(output_filename, e))
+            self.write_to_output_file(filename + '-RETRY')
 
     def get_video_file(self):
         # hides the Tk window
@@ -87,14 +94,16 @@ class FishTracker(object):
         self.current_frame = frame
         # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        self.roi_video()
+
         if ret:  # check if the frame has been read properly
-            fr_len = len(self.frame_no_array)
+            fr_len = len(self.frame_no_list)
 
             self.display_frame_number(self.current_frame, capture)
             # clicking at fish adds a circular point - has to be outside the while loop
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
-            while fr_len == len(self.frame_no_array):
+            while fr_len == len(self.frame_no_list):
                 cv2.imshow(self.window_name, self.current_frame)  # show it
                 self.track_fish_through_frames(capture)
 
@@ -112,11 +121,36 @@ class FishTracker(object):
                             ]
                 images.append(tmp_image)
 
+        # # Display the resulting sub-frame
+        # for x in range(0, n_rows):
+        #     for y in range(0, n_columns):
+        #         cv2.imshow(str(x * n_columns + y + 1), images[x * n_columns + y])
+        #         # cv2.moveWindow(str(x * n_columns + y + 1), 100 + (y * roi_width), 50 + (x * roi_height))
+
+    def write_no_fish_to_file(self, filename):
+        output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
+        try:
+            with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
+                self.print_dictionary(output_file)
+            output_file.close()
+        except IOError as e:
+            print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
+                  .format(output_filename, filename, e))
+            self.write_to_output_file(filename + '-RETRY')
+
+    def print_dictionary(self, output_file):
+        for key, value in self.fish_no_dict.items():
+            if hasattr(value, '__iter__'):
+                output_file.write('{0} \n'.format(key))
+                self.print_dictionary(value)
+            else:
+                output_file.write('{0}, {1} \n'.format(key, value))
+
     def draw_point(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.mouse_x_array.append(x)
-            self.mouse_y_array.append(y)
+            self.mouse_x_list.append(x)
+            self.mouse_y_list.append(y)
 
     @staticmethod
     def display_frame_number(frame_no, capture):
@@ -125,20 +159,22 @@ class FishTracker(object):
 
     def track_fish_through_frames(self, capture):
         if cv2.waitKey(1) % 0xFF == ord('n'):  # press n to get to next frame
-            if 0 < len(self.mouse_x_array) and not [] == self.mouse_y_array[-1:]:  # check if mouse clicked
-                self.frame_no_array.append(capture.get(1))
-                fish_no = len(self.mouse_x_array)
-                self.fish_number_array.append(fish_no)
+            if 0 < len(self.mouse_x_list) and not [] == self.mouse_y_list[-1:]:  # check if mouse clicked
+                self.frame_no_list.append(capture.get(1))
+
+                # TODO CHANGE FISH_NO_list into the dictionary
+                fish_no = len(self.mouse_x_list)
+                self.fish_number_list.append(fish_no)
+
                 # add all of coordinates to the list to be printed with a new line to separate the frames
-                for x in range(fish_no):
-                    self.fish_x.append(self.mouse_x_array[x])
-                    self.fish_y.append(self.mouse_y_array[x])
+                self.fish_x.extend(self.mouse_x_list)
+                self.fish_y.extend(self.mouse_y_list)
                 self.fish_x.append(" ")
                 self.fish_y.append(" ")
                 # reset mouse coordinates
-                del self.mouse_x_array[:]
-                del self.mouse_y_array[:]
-                # another option is self.mouse_x_array[:] = []
+                del self.mouse_x_list[:]
+                del self.mouse_y_list[:]
+                # another option is self.mouse_x_list[:] = []
             else:
                 cv2.putText(self.current_frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX,
                             1,
