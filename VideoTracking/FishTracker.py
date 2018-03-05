@@ -147,7 +147,6 @@ class FishTracker(object):
             else:
                 output_file.write('{0}, {1} \n'.format(key, value))
 
-    # todo remove the point if pressed sth
     # allows removing once!!
     def draw_point(self, event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -169,24 +168,26 @@ class FishTracker(object):
         if cv2.waitKey(1) % 0xFF == ord('n'):  # press n to get to next frame
             if 0 < len(self.mouse_x_list) and not [] == self.mouse_y_list[-1:]:  # check if mouse clicked
                 self.frame_no_list.append(capture.get(1))
-
-                # TODO CHANGE FISH_NO_list into the dictionary
-                fish_no = len(self.mouse_x_list)
-                self.fish_number_list.append(fish_no)
-
-                # add all of coordinates to the list to be printed with a new line to separate the frames
-                self.fish_x.extend(self.mouse_x_list)
-                self.fish_y.extend(self.mouse_y_list)
-                self.fish_x.append(" ")
-                self.fish_y.append(" ")
-                # reset mouse coordinates
-                del self.mouse_x_list[:]
-                del self.mouse_y_list[:]
-                # another option is self.mouse_x_list[:] = []
+                self.update_fish_variables()
             else:
                 cv2.putText(self.current_frame, 'Please first click on a point', (830, 130), cv2.FONT_HERSHEY_SIMPLEX,
                             1,
                             (0, 0, 255), 2)  # display the frame number
+
+    def update_fish_variables(self):
+        # TODO CHANGE FISH_NO_list into the dictionary
+        fish_no = len(self.mouse_x_list)
+        self.fish_number_list.append(fish_no)
+
+        # add all of coordinates to the list to be printed with a new line to separate the frames
+        self.fish_x.extend(self.mouse_x_list)
+        self.fish_y.extend(self.mouse_y_list)
+        self.fish_x.append(" ")
+        self.fish_y.append(" ")
+        # reset mouse coordinates
+        del self.mouse_x_list[:]
+        del self.mouse_y_list[:]
+        # another option is self.mouse_x_list[:] = []
 
     @staticmethod
     def close_capture_window(capture):
