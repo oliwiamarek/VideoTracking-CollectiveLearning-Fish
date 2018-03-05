@@ -16,11 +16,12 @@ class FishTracker(object):
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
         self.current_frame_fish_coord, self.frame_no_list, self.all_fish_coord_list = [], [], []
-        self.fish_no_dict = {}
+        self.roi_fish_count = []
         self.current_frame, self.previous_frame = {}, {}
         self.video_filepath = ""
         self.window_name = "Fishies"
         self.frame_no = 0
+        self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
 
     # TODO FIX
     def visualise_coordinates(self):
@@ -112,20 +113,20 @@ class FishTracker(object):
         roi_height = height / n_rows
         roi_width = width / n_columns
 
+        self.roi_mid_width = roi_width
+        self.roi_first_height = roi_height
+        self.roi_second_height = roi_height * 2
+
         images = []
-        for vid_height in range(0, n_rows):
-            for vid_width in range(0, n_columns):
+        for row in range(0, n_rows):
+            for column in range(0, n_columns):
+                row_height = row * roi_height
+                column_width = column * roi_width
                 tmp_image = self.current_frame[
-                            vid_height * roi_height: (vid_height + 1) * roi_height,
-                            vid_width * roi_width:(vid_width + 1) * roi_width
+                            row_height: (row + 1) * roi_height,
+                            column_width:(column + 1) * roi_width
                             ]
                 images.append(tmp_image)
-
-        # # Display the resulting sub-frame
-        # for x in range(0, n_rows):
-        #     for y in range(0, n_columns):
-        #         cv2.imshow(str(x * n_columns + y + 1), images[x * n_columns + y])
-        #         # cv2.moveWindow(str(x * n_columns + y + 1), 100 + (y * roi_width), 50 + (x * roi_height))
 
     def write_no_fish_to_file(self, filename):
         output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
@@ -140,12 +141,14 @@ class FishTracker(object):
             self.write_to_output_file(filename + '-RETRY')
 
     def print_dictionary(self, output_file):
-        for key, value in self.fish_no_dict.items():
-            if hasattr(value, '__iter__'):
-                output_file.write('{0} \n'.format(key))
-                self.print_dictionary(value)
-            else:
-                output_file.write('{0}, {1} \n'.format(key, value))
+        for f in self.roi_fish_count:
+            for key, value in f.items():
+                # is recursive
+                if hasattr(value, '__iter__'):
+                    self.print_dictionary(value)
+                else:
+                    output_file.write('{0},'.format(value))
+            output_file.write('\n')
 
     # allows removing once!!
     def draw_point(self, event, x, y, flags, params):
@@ -177,9 +180,14 @@ class FishTracker(object):
 
     def update_fish_variables(self):
         # todo check which roi is the fish in
-        fish_no = len(self.current_frame_fish_coord)
-        self.fish_no_dict[self.frame_no] = fish_no
-        # self.fish_no_dict[self.roi] = ['frame': self.frame_no, 'no_fish': fish_no]
+        roi = self.get_no_fish_for_ROI()
+
+        for r in range(len(roi)):
+            self.roi_fish_count.append({
+                'roi': r + 1,
+                'no_fish': roi[r],
+                'frame': self.frame_no
+            })
 
         # add all of coordinates to the list to be printed with a new line to separate the frames
         self.all_fish_coord_list.extend(self.current_frame_fish_coord)
@@ -188,9 +196,25 @@ class FishTracker(object):
         # reset mouse coordinates
         del self.current_frame_fish_coord[:]
 
-    # # todo add dict of roi
-    # def check_which_ROI(self):
-    #     for fish_x in self.mouse_x_list:
+    def get_no_fish_for_ROI(self):
+        roi = [0, 0, 0, 0, 0, 0]
+        for fish in self.current_frame_fish_coord:
+            coordinates = [int(x.strip()) for x in fish.split(',')]
+            x = coordinates[0]
+            y = coordinates[1]
+            if y < self.roi_mid_width and x < self.roi_first_height:
+                roi[0] += 1
+            elif y < self.roi_mid_width and x < self.roi_second_height:
+                roi[1] += 1
+            elif y < self.roi_mid_width and x > self.roi_second_height:
+                roi[2] += 1
+            elif y > self.roi_mid_width and x < self.roi_first_height:
+                roi[3] += 1
+            elif y > self.roi_mid_width and x < self.roi_second_height:
+                roi[4] += 1
+            elif y > self.roi_mid_width and x > self.roi_second_height:
+                roi[5] += 1
+        return roi
 
     @staticmethod
     def close_capture_window(capture):
