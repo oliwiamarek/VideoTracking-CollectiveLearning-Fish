@@ -15,21 +15,21 @@ class FishTracker(object):
         # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
-        self.mouse_x_list, self.mouse_y_list, self.fish_number_list = [], [], []
-        self.frame_no_list, self.fish_x, self.fish_y = [], [], []
+        self.mouse_x_list, self.mouse_y_list = [], []
+        self.frame_no_list, self.all_fish_x_list, self.all_fish_y_list = [], [], []
         self.fish_no_dict = {}
         self.current_frame, self.previous_frame = {}, {}
         self.video_filepath = ""
         self.window_name = "Fishies"
+        self.frame_no = 0
 
     # TODO FIX
     def visualise_coordinates(self):
-        # visualize coordinates
-        self.create_figure(self.frame_no_list, self.fish_x, 'X Coordinates visualisation', 'frame number',
+        self.create_figure(self.frame_no_list, self.all_fish_x_list, 'X Coordinates visualisation', 'frame number',
                            'x-coordinate (pixel)')
-        self.create_figure(self.frame_no_list, self.fish_y, 'Y Coordinates visualisation', 'frame number',
+        self.create_figure(self.frame_no_list, self.all_fish_y_list, 'Y Coordinates visualisation', 'frame number',
                            'y-coordinate (pixel)')
-        self.create_figure(self.fish_x, self.fish_y, 'X and Y Coordinates', 'y-coordinate (pixel)',
+        self.create_figure(self.all_fish_x_list, self.all_fish_y_list, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
         # Block=true prevents the graphs from closing immediately
         plt.show(block=True)
@@ -63,11 +63,11 @@ class FishTracker(object):
         output_filename = 'Outputs\\output_{0}.csv'.format(filename)
         try:
             with open(output_filename, 'w') as output_file:
-                for fish_no in range(len(self.fish_x)):
-                    output_file.write('{0}, {1} \n'.format(self.fish_x[fish_no], self.fish_y[fish_no]))
+                for fish_no in range(len(self.all_fish_x_list)):
+                    output_file.write('{0}, {1} \n'.format(self.all_fish_x_list[fish_no], self.all_fish_y_list[fish_no]))
 
             output_file.close()
-
+            print("Wrote the outputs")
         except IOError as e:
             print("Unable to write to a file {0}. Writing to a new file. ({1})"
                   .format(output_filename, e))
@@ -134,6 +134,7 @@ class FishTracker(object):
             with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
                 self.print_dictionary(output_file)
             output_file.close()
+            print("Wrote no fish to file")
         except IOError as e:
             print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
                   .format(output_filename, filename, e))
@@ -159,8 +160,9 @@ class FishTracker(object):
             del self.mouse_x_list[-1]
             del self.mouse_y_list[-1]
 
-    def display_frame_text(self, frame_no, capture):
-        cv2.putText(frame_no, 'frame ' + str(capture.get(1)), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
+    def display_frame_text(self, frame, capture):
+        self.frame_no = capture.get(1)
+        cv2.putText(frame, 'frame ' + str(self.frame_no), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
                     (0, 255, 0), 2)
         cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
@@ -175,15 +177,15 @@ class FishTracker(object):
                             (0, 0, 255), 2)  # display the frame number
 
     def update_fish_variables(self):
-        # TODO CHANGE FISH_NO_list into the dictionary
+        # todo check which roi is the fish in
         fish_no = len(self.mouse_x_list)
-        self.fish_number_list.append(fish_no)
+        self.fish_no_dict[self.frame_no] = fish_no
 
         # add all of coordinates to the list to be printed with a new line to separate the frames
-        self.fish_x.extend(self.mouse_x_list)
-        self.fish_y.extend(self.mouse_y_list)
-        self.fish_x.append(" ")
-        self.fish_y.append(" ")
+        self.all_fish_x_list.extend(self.mouse_x_list)
+        self.all_fish_y_list.extend(self.mouse_y_list)
+        self.all_fish_x_list.append(" ")
+        self.all_fish_y_list.append(" ")
         # reset mouse coordinates
         del self.mouse_x_list[:]
         del self.mouse_y_list[:]
