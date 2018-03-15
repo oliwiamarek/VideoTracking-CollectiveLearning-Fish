@@ -12,13 +12,17 @@ n_rows = 2
 n_columns = 3
 
 
+def return_array(array, start, element_no):
+    return array[start::element_no]
+
+
 class FishTracker(object):
     def __init__(self):
         # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
-        self.current_frame_fish_coord, self.frame_no_list, self.all_fish_coord_list = [], [], []
-        self.roi_fish_count = []
+        self.current_frame_fish_coord, self.all_fish_x_coord, self.all_fish_y_coord = [], [], []
+        self.roi_fish_count, self.frame_no_list = [], []
         self.current_frame, self.previous_frame = {}, {}
         self.video_filepath = ""
         self.window_name = "Fishies"
@@ -41,7 +45,10 @@ class FishTracker(object):
         if self.is_not_string(title) or self.is_not_string(x_label) or self.is_not_string(y_label):
             raise TypeError("Title or labels not strings. Wrong type.")
         plt.figure()
-        plt.plot(x_axis, y_axis, 'k')
+        x = return_array(x_axis, 0, 3)
+        y = return_array(y_axis, 0, 3)
+        plt.plot(x, y, 'k')
+        plt.plot(return_array(x_axis, 1, 3), return_array(y_axis, 1, 3), 'k')
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
@@ -73,6 +80,8 @@ class FishTracker(object):
             coordinates = [int(x.strip()) for x in fish.split(',')]
             x = coordinates[0]
             y = coordinates[1]
+            self.all_fish_x_coord.append(x)
+            self.all_fish_y_coord.append(y)
             if y < self.roi_mid_width and x < self.roi_first_height:
                 roi[0] += 1
             elif y < self.roi_mid_width and x < self.roi_second_height:
@@ -85,6 +94,8 @@ class FishTracker(object):
                 roi[4] += 1
             elif y > self.roi_mid_width and x > self.roi_second_height:
                 roi[5] += 1
+        self.all_fish_x_coord.append("")
+        self.all_fish_y_coord.append("")
         return roi
 
     def get_video_file(self):
@@ -166,7 +177,6 @@ class FishTracker(object):
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
     def update_fish_variables(self):
-        # todo check which roi is the fish in
         roi = self.get_no_fish_for_ROI()
 
         for r in range(len(roi)):
@@ -176,20 +186,12 @@ class FishTracker(object):
                 'frame': self.frame_no
             })
 
-        # add all of coordinates to the list to be printed with a new line to separate the frames
-        self.all_fish_coord_list.extend(self.current_frame_fish_coord)
-        self.all_fish_coord_list.append(" ")
-
         # reset mouse coordinates
         del self.current_frame_fish_coord[:]
 
     # TODO FIX
     def visualise_coordinates(self):
-        self.create_figure(self.frame_no_list, self.all_fish_coord_list, 'X Coordinates visualisation', 'frame number',
-                           'x-coordinate (pixel)')
-        self.create_figure(self.frame_no_list, self.all_fish_coord_list, 'Y Coordinates visualisation', 'frame number',
-                           'y-coordinate (pixel)')
-        self.create_figure(self.all_fish_coord_list, self.all_fish_coord_list, 'X and Y Coordinates', 'y-coordinate (pixel)',
+        self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
         # Block=true prevents the graphs from closing immediately
         plt.show(block=True)
@@ -214,8 +216,11 @@ class FishTracker(object):
         output_filename = 'Outputs\\output_{0}.csv'.format(filename)
         try:
             with open(output_filename, 'w') as output_file:
-                for fish_no in range(len(self.all_fish_coord_list)):
-                    output_file.write('{0} \n'.format(self.all_fish_coord_list[fish_no]))
+                if len(self.all_fish_y_coord) != len(self.all_fish_x_coord):
+                    raise Exception('Something went wrong with writing down the coordinates, '
+                                    'amount of y and x coordinates is not the same')
+                for fish_no in range(len(self.all_fish_x_coord)):
+                    output_file.write('{0}, {1} \n'.format(self.all_fish_x_coord[fish_no], self.all_fish_y_coord))
 
             output_file.close()
             print("Wrote the outputs")
