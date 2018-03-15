@@ -69,6 +69,8 @@ if __name__ == "__main__":
         tracker.create_record_window()
 
         while cap.isOpened():
+            # reset mouse coordinates
+            del tracker.current_frame_fish_coord[:]
             tracker.track_fish(cap)
             if cap.get(1) > stop_frame_no:
                 break

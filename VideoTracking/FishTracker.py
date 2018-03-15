@@ -45,10 +45,10 @@ class FishTracker(object):
         if self.is_not_string(title) or self.is_not_string(x_label) or self.is_not_string(y_label):
             raise TypeError("Title or labels not strings. Wrong type.")
         plt.figure()
-        x = return_array(x_axis, 0, 3)
-        y = return_array(y_axis, 0, 3)
-        plt.plot(x, y, 'k')
-        plt.plot(return_array(x_axis, 1, 3), return_array(y_axis, 1, 3), 'k')
+        no_fish = len(self.current_frame_fish_coord)
+        for x in xrange(no_fish):
+            plt.plot(return_array(y_axis, x, no_fish + 1), return_array(x_axis, x, no_fish + 1))
+        # plt.plot(return_array(x_axis, 1, no_fish), return_array(y_axis, 1, no_fish))
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
@@ -161,7 +161,7 @@ class FishTracker(object):
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
             while fr_len == len(self.frame_no_list):
-                cv2.imshow(self.window_name, self.current_frame)  # show it
+                cv2.imshow(self.window_name, self.current_frame)
                 self.track_fish_through_frames(capture)
 
     def track_fish_through_frames(self, capture):
@@ -185,9 +185,6 @@ class FishTracker(object):
                 'no_fish': roi[r],
                 'frame': self.frame_no
             })
-
-        # reset mouse coordinates
-        del self.current_frame_fish_coord[:]
 
     # TODO FIX
     def visualise_coordinates(self):
@@ -220,7 +217,8 @@ class FishTracker(object):
                     raise Exception('Something went wrong with writing down the coordinates, '
                                     'amount of y and x coordinates is not the same')
                 for fish_no in range(len(self.all_fish_x_coord)):
-                    output_file.write('{0}, {1} \n'.format(self.all_fish_x_coord[fish_no], self.all_fish_y_coord))
+                    output_file.write('{0}, {1} \n'
+                                      .format(self.all_fish_x_coord[fish_no], self.all_fish_y_coord[fish_no]))
 
             output_file.close()
             print("Wrote the outputs")
