@@ -5,6 +5,8 @@ from Tkinter import Tk
 
 """
 FISH TRACKER CLASS
+https://introlab.github.io/find-object/s
+http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html#matcher
 """
 n_rows = 2
 n_columns = 3
@@ -23,16 +25,10 @@ class FishTracker(object):
         self.frame_no = 0
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
 
-    # TODO FIX
-    def visualise_coordinates(self):
-        self.create_figure(self.frame_no_list, self.all_fish_x_list, 'X Coordinates visualisation', 'frame number',
-                           'x-coordinate (pixel)')
-        self.create_figure(self.frame_no_list, self.all_fish_y_list, 'Y Coordinates visualisation', 'frame number',
-                           'y-coordinate (pixel)')
-        self.create_figure(self.all_fish_x_list, self.all_fish_y_list, 'X and Y Coordinates', 'y-coordinate (pixel)',
-                           'x-coordinate (pixel)')
-        # Block=true prevents the graphs from closing immediately
-        plt.show(block=True)
+    @staticmethod
+    def close_capture_window(capture):
+        capture.release()
+        cv2.destroyAllWindows()
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """
@@ -50,28 +46,46 @@ class FishTracker(object):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
-    @staticmethod
-    def is_not_string(string):
-        # type: (str) -> bool
-        return type(string) is not str
+    def create_record_window(self):
+        self.window_name = 'Fishies'
+        # normalize size of the window to every screen
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
-    def write_to_output_file(self, filename):
-        """
-        Write digitized coordinates into an output file
-        :type filename: str
-        """
-        output_filename = 'Outputs\\output_{0}.csv'.format(filename)
-        try:
-            with open(output_filename, 'w') as output_file:
-                for fish_no in range(len(self.all_fish_coord_list)):
-                    output_file.write('{0} \n'.format(self.all_fish_coord_list[fish_no]))
+    def display_frame_text(self, frame, capture):
+        self.frame_no = capture.get(1)
+        cv2.putText(frame, 'frame ' + str(self.frame_no), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
+                    (0, 255, 0), 2)
+        cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-            output_file.close()
-            print("Wrote the outputs")
-        except IOError as e:
-            print("Unable to write to a file {0}. Writing to a new file. ({1})"
-                  .format(output_filename, e))
-            self.write_to_output_file(filename + '-RETRY')
+    # allows removing once!!
+    def draw_point(self, event, x, y, flags, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            self.previous_frame = self.current_frame.copy()
+            cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
+            self.current_frame_fish_coord.append('{0}, {1}'.format(x, y))
+        elif event == cv2.EVENT_RBUTTONDOWN:
+            self.current_frame = self.previous_frame.copy()
+            del self.current_frame_fish_coord[-1]
+
+    def get_no_fish_for_ROI(self):
+        roi = [0, 0, 0, 0, 0, 0]
+        for fish in self.current_frame_fish_coord:
+            coordinates = [int(x.strip()) for x in fish.split(',')]
+            x = coordinates[0]
+            y = coordinates[1]
+            if y < self.roi_mid_width and x < self.roi_first_height:
+                roi[0] += 1
+            elif y < self.roi_mid_width and x < self.roi_second_height:
+                roi[1] += 1
+            elif y < self.roi_mid_width and x > self.roi_second_height:
+                roi[2] += 1
+            elif y > self.roi_mid_width and x < self.roi_first_height:
+                roi[3] += 1
+            elif y > self.roi_mid_width and x < self.roi_second_height:
+                roi[4] += 1
+            elif y > self.roi_mid_width and x > self.roi_second_height:
+                roi[5] += 1
+        return roi
 
     def get_video_file(self):
         # hides the Tk window
@@ -83,30 +97,20 @@ class FishTracker(object):
             self.video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
                                                                filetypes=[("Video Files", "*.avi *.mp4")])
 
-    def create_record_window(self):
-        self.window_name = 'Fishies'
-        # normalize size of the window to every screen
-        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+    @staticmethod
+    def is_not_string(string):
+        # type: (str) -> bool
+        return type(string) is not str
 
-    def track_fish(self, capture):
-        # read next frame
-        ret, frame = capture.read()
-        self.current_frame = frame
-        self.previous_frame = self.current_frame.copy()
-        # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-        self.roi_video()
-
-        if ret:  # check if the frame has been read properly
-            fr_len = len(self.frame_no_list)
-
-            self.display_frame_text(self.current_frame, capture)
-            # clicking at fish adds a circular point - has to be outside the while loop
-            cv2.setMouseCallback(self.window_name, self.draw_point)
-
-            while fr_len == len(self.frame_no_list):
-                cv2.imshow(self.window_name, self.current_frame)  # show it
-                self.track_fish_through_frames(capture)
+    def print_dictionary(self, output_file):
+        for f in self.roi_fish_count:
+            for key, value in f.items():
+                # is recursive
+                if hasattr(value, '__iter__'):
+                    self.print_dictionary(value)
+                else:
+                    output_file.write('{0},'.format(value))
+            output_file.write('\n')
 
     def roi_video(self):
         height, width, ch = self.current_frame.shape
@@ -128,43 +132,26 @@ class FishTracker(object):
                             ]
                 images.append(tmp_image)
 
-    def write_no_fish_to_file(self, filename):
-        output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
-        try:
-            with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
-                self.print_dictionary(output_file)
-            output_file.close()
-            print("Wrote no fish to file")
-        except IOError as e:
-            print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
-                  .format(output_filename, filename, e))
-            self.write_to_output_file(filename + '-RETRY')
+    # todo add possibility to redo the whole frame
+    def track_fish(self, capture):
+        # read next frame
+        ret, frame = capture.read()
+        self.current_frame = frame
+        self.previous_frame = self.current_frame.copy()
+        # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    def print_dictionary(self, output_file):
-        for f in self.roi_fish_count:
-            for key, value in f.items():
-                # is recursive
-                if hasattr(value, '__iter__'):
-                    self.print_dictionary(value)
-                else:
-                    output_file.write('{0},'.format(value))
-            output_file.write('\n')
+        self.roi_video()
 
-    # allows removing once!!
-    def draw_point(self, event, x, y, flags, params):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            self.previous_frame = self.current_frame.copy()
-            cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.current_frame_fish_coord.append('{0}, {1}'.format(x, y))
-        elif event == cv2.EVENT_RBUTTONDOWN:
-            self.current_frame = self.previous_frame.copy()
-            del self.current_frame_fish_coord[-1]
+        if ret:  # check if the frame has been read properly
+            fr_len = len(self.frame_no_list)
 
-    def display_frame_text(self, frame, capture):
-        self.frame_no = capture.get(1)
-        cv2.putText(frame, 'frame ' + str(self.frame_no), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    (0, 255, 0), 2)
-        cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+            self.display_frame_text(self.current_frame, capture)
+            # clicking at fish adds a circular point - has to be outside the while loop
+            cv2.setMouseCallback(self.window_name, self.draw_point)
+
+            while fr_len == len(self.frame_no_list):
+                cv2.imshow(self.window_name, self.current_frame)  # show it
+                self.track_fish_through_frames(capture)
 
     def track_fish_through_frames(self, capture):
         # press n to get to next frame
@@ -196,27 +183,43 @@ class FishTracker(object):
         # reset mouse coordinates
         del self.current_frame_fish_coord[:]
 
-    def get_no_fish_for_ROI(self):
-        roi = [0, 0, 0, 0, 0, 0]
-        for fish in self.current_frame_fish_coord:
-            coordinates = [int(x.strip()) for x in fish.split(',')]
-            x = coordinates[0]
-            y = coordinates[1]
-            if y < self.roi_mid_width and x < self.roi_first_height:
-                roi[0] += 1
-            elif y < self.roi_mid_width and x < self.roi_second_height:
-                roi[1] += 1
-            elif y < self.roi_mid_width and x > self.roi_second_height:
-                roi[2] += 1
-            elif y > self.roi_mid_width and x < self.roi_first_height:
-                roi[3] += 1
-            elif y > self.roi_mid_width and x < self.roi_second_height:
-                roi[4] += 1
-            elif y > self.roi_mid_width and x > self.roi_second_height:
-                roi[5] += 1
-        return roi
+    # TODO FIX
+    def visualise_coordinates(self):
+        self.create_figure(self.frame_no_list, self.all_fish_coord_list, 'X Coordinates visualisation', 'frame number',
+                           'x-coordinate (pixel)')
+        self.create_figure(self.frame_no_list, self.all_fish_coord_list, 'Y Coordinates visualisation', 'frame number',
+                           'y-coordinate (pixel)')
+        self.create_figure(self.all_fish_coord_list, self.all_fish_coord_list, 'X and Y Coordinates', 'y-coordinate (pixel)',
+                           'x-coordinate (pixel)')
+        # Block=true prevents the graphs from closing immediately
+        plt.show(block=True)
 
-    @staticmethod
-    def close_capture_window(capture):
-        capture.release()
-        cv2.destroyAllWindows()
+    def write_no_fish_to_file(self, filename):
+        output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
+        try:
+            with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
+                self.print_dictionary(output_file)
+            output_file.close()
+            print("Wrote no fish to file")
+        except IOError as e:
+            print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
+                  .format(output_filename, filename, e))
+            self.write_to_output_file(filename + '-RETRY')
+
+    def write_to_output_file(self, filename):
+        """
+        Write digitized coordinates into an output file
+        :type filename: str
+        """
+        output_filename = 'Outputs\\output_{0}.csv'.format(filename)
+        try:
+            with open(output_filename, 'w') as output_file:
+                for fish_no in range(len(self.all_fish_coord_list)):
+                    output_file.write('{0} \n'.format(self.all_fish_coord_list[fish_no]))
+
+            output_file.close()
+            print("Wrote the outputs")
+        except IOError as e:
+            print("Unable to write to a file {0}. Writing to a new file. ({1})"
+                  .format(output_filename, e))
+            self.write_to_output_file(filename + '-RETRY')

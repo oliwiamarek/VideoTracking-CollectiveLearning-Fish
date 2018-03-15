@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
-        # tracker.visualise_coordinates()
+        tracker.visualise_coordinates()
     except:
         print ("Unexpected error:", sys.exc_info()[0])
         raise
