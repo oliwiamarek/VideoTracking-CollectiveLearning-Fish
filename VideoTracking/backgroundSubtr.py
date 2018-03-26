@@ -5,6 +5,7 @@ import cv2
 # https://pdfs.semanticscholar.org/8a1f/27fd371eceb8654b735502b810d2094e420b.pdf
 # https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
 # http://layer0.authentise.com/how-to-track-objects-with-stationary-background.html
+# https://medium.com/machine-learning-world/tutorial-making-road-traffic-counting-app-based-on-computer-vision-and-opencv-166937911660
 
 # construct the argument parser and parse the arguments
 # look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
@@ -26,7 +27,7 @@ while 1:
     if not ret:
         break
 
-    cv2.accumulateWeighted(frame, movingAverage, 0.2)
+    cv2.accumulateWeighted(frame, movingAverage, 0.01)
     # do the drawing stuff
     bcgrModel = cv2.convertScaleAbs(movingAverage)
     # show the background model
