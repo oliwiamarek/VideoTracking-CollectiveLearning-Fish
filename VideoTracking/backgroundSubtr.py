@@ -1,4 +1,5 @@
 import argparse
+import numpy as np
 import cv2
 
 # https://pdfs.semanticscholar.org/8a1f/27fd371eceb8654b735502b810d2094e420b.pdf
@@ -15,6 +16,9 @@ args = vars(ap.parse_args())
 firstFrame = None
 camera = cv2.VideoCapture('ExampleVid/week4.mp4')
 
+ret, frame = camera.read()
+movingAverage = np.float32(frame)
+
 while 1:
     ret, frame = camera.read()
 
@@ -22,20 +26,28 @@ while 1:
     if not ret:
         break
 
+    cv2.accumulateWeighted(frame, movingAverage, 0.2)
+    # do the drawing stuff
+    bcgrModel = cv2.convertScaleAbs(movingAverage)
+    # show the background model
+    cv2.namedWindow("Background Model", cv2.WINDOW_NORMAL)
+    cv2.imshow('Background Model', bcgrModel)
+
     # convert to greyscale and blur it
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    differenceImage = cv2.absdiff(bcgrModel, frame)
+    gray = cv2.cvtColor(differenceImage, cv2.COLOR_BGR2GRAY)
     gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
     '''ASSUMPTION - first frame no movement '''
 
-    # if the first frame is None, initialize it
-    if firstFrame is None:
-        firstFrame = gray
-        continue
+    # # if the first frame is None, initialize it
+    # if firstFrame is None:
+    #     firstFrame = gray
+    #     continue
 
     # compute the absolute difference between the current frame and first frame
-    frameDelta = cv2.absdiff(firstFrame, gray)
-    thresh = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+    # frameDelta = cv2.absdiff(firstFrame, gray)
+    thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1]
 
     # dilate the thresholded image to fill in holes, then find contours on thresholded image
     thresh = cv2.dilate(thresh, None, iterations=2)
@@ -52,11 +64,11 @@ while 1:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
-    cv2.namedWindow("Thresh", cv2.WINDOW_NORMAL)
+    cv2.namedWindow("Foreground", cv2.WINDOW_NORMAL)
     cv2.namedWindow("Frame Delta", cv2.WINDOW_NORMAL)
     cv2.imshow("Frame", frame)
-    cv2.imshow("Thresh", thresh)
-    cv2.imshow("Frame Delta", frameDelta)
+    cv2.imshow("Foreground", thresh)
+    cv2.imshow("Frame Delta", differenceImage)
 
     key = cv2.waitKey(1) & 0xFF
     # if the `q` key is pressed, break from the lop
