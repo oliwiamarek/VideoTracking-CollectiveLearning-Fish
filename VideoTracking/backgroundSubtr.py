@@ -9,10 +9,13 @@ import cv2
 
 # ===============================================
 VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
-DEBUG = False  # used to print debug logs
+DEBUG = True  # used to print debug logs
+X_COORD = []
+Y_COORD = []
 
 
 # ===============================================
+# Used for printing out things for debugging purposes
 def log(s):
     if DEBUG:
         print s
@@ -22,8 +25,8 @@ def construct_argument_parser():
     # construct the argument parser and parse the arguments
     # look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
     ap = argparse.ArgumentParser()
-    ap.add_argument("-a", "--min-area", type=int, default=800, help="minimum area size for contours")
-    ap.add_argument("-f", "--waiting-frames", type=int, default=6000,
+    ap.add_argument("-a", "--min-area", type=int, default=1300, help="minimum area size for contours")
+    ap.add_argument("-f", "--waiting-frames", type=int, default=1000,
                     help="number of frames used to calculate bcgr model")
     ap.add_argument("-t", "--threshold", type=float, default=0.01,
                     help="threshold used in bcgr subtraction average calculation")
@@ -92,7 +95,14 @@ def detect_fish(arguments, background_model):
 
             # compute the bounding box for the contour, draw it on the frame
             (x, y, w, h) = cv2.boundingRect(c)
+            X_COORD.append(x)
+            Y_COORD.append(y)
             cv2.rectangle(currentFrame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        log("X coord: {0}".format(X_COORD))
+        log("Y coord: {0}".format(Y_COORD))
+        del X_COORD[:]
+        del Y_COORD[:]
 
         cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
         cv2.namedWindow("Foreground", cv2.WINDOW_NORMAL)
