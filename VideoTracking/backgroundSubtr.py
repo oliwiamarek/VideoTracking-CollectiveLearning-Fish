@@ -118,8 +118,7 @@ def convertToGreyScaleAndBlur(currentFrame):
 
 
 # dilate the threshold image to fill in holes, then find contours on threshold image
-def findContours(threshold):
-    thresh = cv2.dilate(threshold, None, iterations=2)
+def findContours(thresh):
     im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     log("Successfully found contours.")
     # createWindow("Foreground", thresh)
@@ -130,9 +129,8 @@ def useBackgroundSubtractionOnCurrentFrame(currentFrame):
     gray = convertToGreyScaleAndBlur(currentFrame)
 
     # compute the absolute difference between the current frame and background frame
-    thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1]
-
-    contours = findContours(thresh)
+    threshold = cv2.dilate(cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1], None, iterations=2)
+    contours = findContours(threshold)
 
     drawPoints(contours, currentFrame)
 
@@ -142,8 +140,7 @@ def useBackgroundSubtractionOnCurrentFrame(currentFrame):
     del Y_COORD[:]
 
     createWindow("Frame", currentFrame)
-    createWindow("Foreground", thresh)
-    #createWindow("Frame Delta", differenceImage)
+    createWindow("Foreground", threshold)
 
 
 # =====================================================================================================================
