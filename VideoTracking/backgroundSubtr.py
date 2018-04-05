@@ -10,6 +10,9 @@ import cv2
 # ===============================================
 VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
 DEBUG = True  # used to print debug logs
+WAITING_FRAMES = 500  # default number of frames used to calculate bcgr model
+MIN_AREA_SIZE = 1300  # default minimum area size for contours
+THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average calculation
 X_COORD = []
 Y_COORD = []
 
@@ -25,10 +28,10 @@ def construct_argument_parser():
     # construct the argument parser and parse the arguments
     # look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
     ap = argparse.ArgumentParser()
-    ap.add_argument("-a", "--min-area", type=int, default=1300, help="minimum area size for contours")
-    ap.add_argument("-f", "--waiting-frames", type=int, default=1000,
+    ap.add_argument("-a", "--min-area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
+    ap.add_argument("-f", "--waiting-frames", type=int, default=WAITING_FRAMES,
                     help="number of frames used to calculate bcgr model")
-    ap.add_argument("-t", "--threshold", type=float, default=0.01,
+    ap.add_argument("-t", "--threshold", type=float, default=THRESHOLD,
                     help="threshold used in bcgr subtraction average calculation")
     return vars(ap.parse_args())
 
@@ -54,7 +57,17 @@ def create_background_model(arguments):
         log("Frame number: {0} done successfully.".format(i))
     print("Model calculated")
     camera.release()
+
+    # show the background model
+    createWindow("Background Model", bcgrModel)
+    log("Opened background model window for: {0}".format(bcgrModel))
+
     return bcgrModel
+
+
+def createWindow(title, variable):
+    cv2.namedWindow(title, cv2.WINDOW_NORMAL)
+    cv2.imshow(title, variable)
 
 
 def detect_fish(arguments, background_model):
@@ -67,11 +80,6 @@ def detect_fish(arguments, background_model):
         # if frame could not be grabbed, we reached the end of video
         if not grabbed:
             break
-
-        # show the background model
-        cv2.namedWindow("Background Model", cv2.WINDOW_NORMAL)
-        cv2.imshow('Background Model', background_model)
-        log("Opened background model window.")
 
         # convert to greyscale and blur it
         differenceImage = cv2.absdiff(background_model, currentFrame)
@@ -97,27 +105,24 @@ def detect_fish(arguments, background_model):
             (x, y, w, h) = cv2.boundingRect(c)
             X_COORD.append(x)
             Y_COORD.append(y)
-            cv2.rectangle(currentFrame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.circle(currentFrame, (x + w / 2, y + h / 2), 5, (0, 255, 0), -1)
 
         log("X coord: {0}".format(X_COORD))
         log("Y coord: {0}".format(Y_COORD))
         del X_COORD[:]
         del Y_COORD[:]
 
-        cv2.namedWindow("Frame", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("Foreground", cv2.WINDOW_NORMAL)
-        cv2.namedWindow("Frame Delta", cv2.WINDOW_NORMAL)
-        cv2.imshow("Frame", currentFrame)
-        cv2.imshow("Foreground", thresh)
-        cv2.imshow("Frame Delta", differenceImage)
+        createWindow("Frame", currentFrame)
+        createWindow("Foreground", thresh)
+        createWindow("Frame Delta", differenceImage)
 
         # if the `q` key is pressed, break from the lop
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             log("Pressed 'q' to exit.")
             break
-    camera.release()
-    cv2.destroyAllWindows()
+    from MainProgram import close_capture_window
+    close_capture_window(camera)
     log("Process finished.")
 
 

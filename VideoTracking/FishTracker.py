@@ -17,7 +17,7 @@ def return_array(array, start, element_no):
 
 
 class FishTracker(object):
-    def __init__(self):
+    def __init__(self, backgroundModel):
         # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
@@ -28,11 +28,7 @@ class FishTracker(object):
         self.window_name = "Fishies"
         self.frame_no = 0
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
-
-    @staticmethod
-    def close_capture_window(capture):
-        capture.release()
-        cv2.destroyAllWindows()
+        self.background_model = backgroundModel
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """

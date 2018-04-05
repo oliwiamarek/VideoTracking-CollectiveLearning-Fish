@@ -7,6 +7,7 @@ import cv2
 import os
 import sys
 import FishTracker
+from backgroundSubtr import construct_argument_parser, create_background_model
 
 '''
 GLOBAL FUNCTIONS 
@@ -50,6 +51,11 @@ def get_name_from_path():
         raise
 
 
+def close_capture_window(capture):
+    capture.release()
+    cv2.destroyAllWindows()
+
+
 '''
 MAIN FUNCTION
 '''
@@ -60,6 +66,9 @@ if __name__ == "__main__":
 
         tracker.get_video_file()
         filename = get_name_from_path()
+
+        args = construct_argument_parser()
+        backgroundModel = create_background_model(args)
 
         cap = cv2.VideoCapture(tracker.video_filepath)
 
@@ -75,7 +84,7 @@ if __name__ == "__main__":
             if cap.get(1) > stop_frame_no:
                 break
 
-        tracker.close_capture_window(cap)
+        close_capture_window(cap)
 
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
