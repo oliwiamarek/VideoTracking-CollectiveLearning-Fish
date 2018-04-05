@@ -10,7 +10,7 @@ import cv2
 # ===============================================
 VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
 DEBUG = True  # used to print debug logs
-WAITING_FRAMES = 500  # default number of frames used to calculate bcgr model
+WAITING_FRAMES = 200  # default number of frames used to calculate bcgr model
 MIN_AREA_SIZE = 1300  # default minimum area size for contours
 THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average calculation
 X_COORD = []
@@ -45,13 +45,13 @@ def create_background_model(arguments):
     ret, frame = camera.read()
     movingAverage = np.float32(frame)
     for i in range(noWaitingFrames):
-        grabbed, currentFrame = camera.read()
+        grabbed, current_frame = camera.read()
 
         # if frame could not be grabbed, we reached the end of video
         if not grabbed:
             break
 
-        cv2.accumulateWeighted(currentFrame, movingAverage, arguments["threshold"])
+        cv2.accumulateWeighted(current_frame, movingAverage, arguments["threshold"])
         # do the drawing stuff
         bcgrModel = cv2.convertScaleAbs(movingAverage)
         log("Frame number: {0} done successfully.".format(i))
@@ -70,7 +70,7 @@ def createWindow(title, variable):
     cv2.imshow(title, variable)
 
 
-def detect_fish(arguments, background_model):
+def detect_fish():
     print("Start Fish detection.")
     # start video file/webcam stream
     camera = cv2.VideoCapture(VIDEO_SOURCE)
@@ -81,40 +81,7 @@ def detect_fish(arguments, background_model):
         if not grabbed:
             break
 
-        # convert to greyscale and blur it
-        differenceImage = cv2.absdiff(background_model, currentFrame)
-        gray = cv2.cvtColor(differenceImage, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
-        log("Successfully converted to greyscale and blurred.")
-
-        # compute the absolute difference between the current frame and background frame
-        thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1]
-
-        # dilate the threshold image to fill in holes, then find contours on threshold image
-        thresh = cv2.dilate(thresh, None, iterations=2)
-        im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        log("Successfully found contours.")
-
-        # loop over the contours
-        for c in contours:
-            # if the contour is too small, ignore it
-            if cv2.contourArea(c) < arguments["min_area"]:
-                continue
-
-            # compute the bounding box for the contour, draw it on the frame
-            (x, y, w, h) = cv2.boundingRect(c)
-            X_COORD.append(x)
-            Y_COORD.append(y)
-            cv2.circle(currentFrame, (x + w / 2, y + h / 2), 5, (0, 255, 0), -1)
-
-        log("X coord: {0}".format(X_COORD))
-        log("Y coord: {0}".format(Y_COORD))
-        del X_COORD[:]
-        del Y_COORD[:]
-
-        createWindow("Frame", currentFrame)
-        createWindow("Foreground", thresh)
-        createWindow("Frame Delta", differenceImage)
+        useBackgroundSubtractionOnCurrentFrame(currentFrame)
 
         # if the `q` key is pressed, break from the lop
         key = cv2.waitKey(1) & 0xFF
@@ -126,9 +93,63 @@ def detect_fish(arguments, background_model):
     log("Process finished.")
 
 
+def drawPoints(contours, currentFrame):
+    # loop over the contours
+    for c in contours:
+        # if the contour is too small, ignore it
+        if cv2.contourArea(c) < args["min_area"]:
+            continue
+        # compute the bounding box for the contour, draw it on the frame
+        (x, y, w, h) = cv2.boundingRect(c)
+        X_COORD.append(x)
+        Y_COORD.append(y)
+        # x + w/2 because (x,y) is top left corner of contour, (x+w, y+h) is bottom right so the halves are middle
+        cv2.circle(currentFrame, (x + w / 2, y + h / 2), 5, (0, 255, 0), -1)
+
+
+# convert current frame to grey scale and blur it
+def convertToGreyScaleAndBlur(currentFrame):
+    differenceImage = cv2.absdiff(backgroundModel, currentFrame)
+    createWindow("Frame Delta", differenceImage)
+    gray = cv2.cvtColor(differenceImage, cv2.COLOR_BGR2GRAY)
+    gray = cv2.GaussianBlur(gray, (21, 21), 0)
+    log("Successfully converted to greyscale and blurred.")
+    return gray
+
+
+# dilate the threshold image to fill in holes, then find contours on threshold image
+def findContours(threshold):
+    thresh = cv2.dilate(threshold, None, iterations=2)
+    im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    log("Successfully found contours.")
+    # createWindow("Foreground", thresh)
+    return contours
+
+
+def useBackgroundSubtractionOnCurrentFrame(currentFrame):
+    gray = convertToGreyScaleAndBlur(currentFrame)
+
+    # compute the absolute difference between the current frame and background frame
+    thresh = cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1]
+
+    contours = findContours(thresh)
+
+    drawPoints(contours, currentFrame)
+
+    log("X coord: {0}".format(X_COORD))
+    log("Y coord: {0}".format(Y_COORD))
+    del X_COORD[:]
+    del Y_COORD[:]
+
+    createWindow("Frame", currentFrame)
+    createWindow("Foreground", thresh)
+    #createWindow("Frame Delta", differenceImage)
+
+
 # =====================================================================================================================
 
 if __name__ == "__main__":
+    global args, backgroundModel
     args = construct_argument_parser()
     backgroundModel = create_background_model(args)
-    detect_fish(args, backgroundModel)
+    detect_fish()
