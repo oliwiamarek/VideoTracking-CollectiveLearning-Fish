@@ -2,14 +2,14 @@ import cv2
 import matplotlib.pyplot as plt
 import tkFileDialog
 from Tkinter import Tk
+from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
+from Globals import N_ROI_COLUMNS, N_ROI_ROWS
 
 """
 FISH TRACKER CLASS
 https://introlab.github.io/find-object/s
 http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html#matcher
 """
-n_rows = 2
-n_columns = 3
 
 
 def return_array(array, start, element_no):
@@ -17,7 +17,7 @@ def return_array(array, start, element_no):
 
 
 class FishTracker(object):
-    def __init__(self, backgroundModel):
+    def __init__(self):
         # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
         # fish_x, fish_y - lists to hold coordinates of all fish in all frames
         # TODO delete: fish_number_list
@@ -28,7 +28,8 @@ class FishTracker(object):
         self.window_name = "Fishies"
         self.frame_no = 0
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
-        self.background_model = backgroundModel
+        self.bcgSubtraction = BackgroundSubtraction()
+        self.bcgSubtraction.construct_argument_parser()
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """
@@ -121,16 +122,16 @@ class FishTracker(object):
 
     def roi_video(self):
         height, width, ch = self.current_frame.shape
-        roi_height = height / n_rows
-        roi_width = width / n_columns
+        roi_height = height / N_ROI_ROWS
+        roi_width = width / N_ROI_COLUMNS
 
         self.roi_mid_width = roi_width
         self.roi_first_height = roi_height
         self.roi_second_height = roi_height * 2
 
         images = []
-        for row in range(0, n_rows):
-            for column in range(0, n_columns):
+        for row in range(0, N_ROI_ROWS):
+            for column in range(0, N_ROI_COLUMNS):
                 row_height = row * roi_height
                 column_width = column * roi_width
                 tmp_image = self.current_frame[
@@ -182,24 +183,16 @@ class FishTracker(object):
                 'frame': self.frame_no
             })
 
+    def use_background_subtraction(self, cap):
+        self.bcgSubtraction.create_background_model()
+        self.bcgSubtraction.detect_fish()
+
     # TODO FIX
     def visualise_coordinates(self):
         self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
         # Block=true prevents the graphs from closing immediately
         plt.show(block=True)
-
-    def write_no_fish_to_file(self, filename):
-        output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
-        try:
-            with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
-                self.print_dictionary(output_file)
-            output_file.close()
-            print("Wrote no fish to file")
-        except IOError as e:
-            print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
-                  .format(output_filename, filename, e))
-            self.write_to_output_file(filename + '-RETRY')
 
     def write_to_output_file(self, filename):
         """
@@ -221,4 +214,16 @@ class FishTracker(object):
         except IOError as e:
             print("Unable to write to a file {0}. Writing to a new file. ({1})"
                   .format(output_filename, e))
+            self.write_to_output_file(filename + '-RETRY')
+
+    def write_no_fish_to_file(self, filename):
+        output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
+        try:
+            with open('Outputs\\fish_no_output_{0}.csv'.format(filename), 'w') as output_file:
+                self.print_dictionary(output_file)
+            output_file.close()
+            print("Wrote no fish to file")
+        except IOError as e:
+            print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
+                  .format(output_filename, filename, e))
             self.write_to_output_file(filename + '-RETRY')

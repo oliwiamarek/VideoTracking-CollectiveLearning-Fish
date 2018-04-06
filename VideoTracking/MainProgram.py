@@ -6,28 +6,22 @@
 import cv2
 import os
 import sys
-import FishTracker
-from backgroundSubtr import construct_argument_parser, create_background_model
+from FishTracker import FishTracker
+from Globals import MANUAL
+from Globals import calculate_frames, close_capture_window
 
 '''
-GLOBAL FUNCTIONS 
+===========================================================================
+FUNCTIONS
+===========================================================================
 '''
-stop_frame_no = 0
-
-
-def calculate_frames(capture, seconds):
-    try:
-        return int(seconds * capture.get(5))
-    except TypeError:
-        print("Cannot calculate frames due to wrong values: seconds: {0}, capture: {1}".format(seconds, capture.get(5)))
-        raise
 
 
 def calculate_video_duration():
-    global stop_frame_no
+    global STOP_FRAME_NO
     # calculate start and stop frames (normalized between 0 and 1)
     start_frame_no = calculate_frames(cap, 1)
-    stop_frame_no = calculate_frames(cap, 2)
+    STOP_FRAME_NO = calculate_frames(cap, 2)
 
     # initialize the starting frame of the video object to start_frame_no
     cap.set(1, start_frame_no)
@@ -51,41 +45,38 @@ def get_name_from_path():
         raise
 
 
-def close_capture_window(capture):
-    capture.release()
-    cv2.destroyAllWindows()
+def trackFish(capture):
+    while capture.isOpened():
+        # reset mouse coordinates
+        del tracker.current_frame_fish_coord[:]
+        if MANUAL:
+            tracker.track_fish(capture)
+        else:
+            tracker.use_background_subtraction(capture)
+        if capture.get(1) > STOP_FRAME_NO:
+            break
 
 
 '''
+===========================================================================
 MAIN FUNCTION
+===========================================================================
 '''
 
 if __name__ == "__main__":
     try:
-        tracker = FishTracker.FishTracker()
-
+        tracker = FishTracker()
         tracker.get_video_file()
         filename = get_name_from_path()
 
-        args = construct_argument_parser()
-        backgroundModel = create_background_model(args)
-
         cap = cv2.VideoCapture(tracker.video_filepath)
-
         print_frame_rate()
-
         calculate_video_duration()
         tracker.create_record_window()
-
-        while cap.isOpened():
-            # reset mouse coordinates
-            del tracker.current_frame_fish_coord[:]
-            tracker.track_fish(cap)
-            if cap.get(1) > stop_frame_no:
-                break
+        trackFish(cap)
 
         close_capture_window(cap)
-
+        # TODO have a wrapper around it that calls it with a name that's specified
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
         tracker.visualise_coordinates()
