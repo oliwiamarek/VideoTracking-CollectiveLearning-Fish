@@ -1,5 +1,4 @@
 import argparse
-
 import cv2
 
 '''
@@ -30,7 +29,7 @@ def log(s):
         print s
 
 
-def createWindow(title, variable):
+def create_window(title, variable):
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.imshow(title, variable)
 
@@ -54,3 +53,8 @@ def construct_argument_parser():
 
 def return_array(array, start, element_no):
     return array[start::element_no]
+
+
+def is_not_string(string):
+    # type: (str) -> bool
+    return type(string) is not str

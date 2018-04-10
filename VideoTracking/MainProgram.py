@@ -3,14 +3,15 @@
 # 18 February 2018
 # This program enables the user to digitize fish position
 
+import tkFileDialog
+from Tkinter import Tk
+
 import cv2
 import os
 import sys
-import tkFileDialog
-from Tkinter import Tk
+
 from FishTracker import FishTracker
-from config import MANUAL
-from config import close_capture_window
+from config import MANUAL, close_capture_window, log
 
 '''
 ===========================================================================
@@ -33,10 +34,10 @@ def get_video_file():
 
 
 def calculate_video_duration():
-    global STOP_FRAME_NO
+    global stop_frame_no
     # calculate start and stop frames (normalized between 0 and 1)
     start_frame_no = calculate_frames(cap, 1)
-    STOP_FRAME_NO = calculate_frames(cap, 2)
+    stop_frame_no = calculate_frames(cap, 2)
 
     # initialize the starting frame of the video object to start_frame_no
     cap.set(1, start_frame_no)
@@ -51,7 +52,6 @@ def print_frame_rate():
         raise
 
 
-# TODO move to Fish tracer and make the filepath private
 def get_name_from_path(path):
     try:
         return os.path.splitext(os.path.basename(path))[0]
@@ -60,16 +60,18 @@ def get_name_from_path(path):
         raise
 
 
-def trackFish(capture):
+def track_fish(capture):
+    if MANUAL:
+        tracker.create_record_window()
+
     while capture.isOpened():
         # reset mouse coordinates
         del tracker.current_frame_fish_coord[:]
         if MANUAL:
-            tracker.create_record_window()
             tracker.track_fish(capture)
         else:
             tracker.use_background_subtraction(capture)
-        if capture.get(1) > STOP_FRAME_NO:
+        if capture.get(1) > stop_frame_no:
             break
 
 
@@ -96,9 +98,10 @@ if __name__ == "__main__":
 
         print_frame_rate()
         calculate_video_duration()
-        trackFish(cap)
-
+        track_fish(cap)
         close_capture_window(cap)
+        log("Tracking process finished.")
+
         # TODO have a wrapper around it that calls it with a name that's specified
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)

@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import N_ROI_COLUMNS, N_ROI_ROWS, createWindow, return_array
+from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, create_window
 
 """
 FISH TRACKER CLASS
@@ -32,13 +32,12 @@ class FishTracker(object):
         :type x_label: str
         :type y_label: str
         """
-        if self.is_not_string(title) or self.is_not_string(x_label) or self.is_not_string(y_label):
+        if is_not_string(title) or is_not_string(x_label) or is_not_string(y_label):
             raise TypeError("Title or labels not strings. Wrong type.")
         plt.figure()
         no_fish = len(self.current_frame_fish_coord)
         for x in xrange(no_fish):
-            plt.plot(return_array(y_axis, x, no_fish + 1), return_array(x_axis, x, no_fish + 1))
-        # plt.plot(return_array(x_axis, 1, no_fish), return_array(y_axis, 1, no_fish))
+            plt.plot(return_array(x_axis, x, no_fish + 1), return_array(y_axis, x, no_fish + 1))
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
@@ -87,11 +86,6 @@ class FishTracker(object):
         self.all_fish_x_coord.append("")
         self.all_fish_y_coord.append("")
         return roi
-
-    @staticmethod
-    def is_not_string(string):
-        # type: (str) -> bool
-        return type(string) is not str
 
     def print_dictionary(self, output_file):
         for f in self.roi_fish_count:
@@ -169,14 +163,13 @@ class FishTracker(object):
     def use_background_subtraction(self, cap):
         self.bcgSubtraction.create_background_model()
         # show the background model
-        createWindow("Background Model", self.bcgSubtraction.backgroundModel)
+        create_window("Background Model", self.bcgSubtraction.backgroundModel)
         print("Start Fish detection.")
         while cap.isOpened():
             self.frame_no_list.append(cap.get(1))
             self.update_fish_variables()
             self.bcgSubtraction.detect_fish(cap)
 
-    # TODO FIX
     def visualise_coordinates(self):
         self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',
                            'x-coordinate (pixel)')
