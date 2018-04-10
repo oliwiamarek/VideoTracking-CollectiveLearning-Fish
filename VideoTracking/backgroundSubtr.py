@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import cv2
 
@@ -9,7 +8,7 @@ import cv2
 
 # ===============================================
 # import global variables
-from config import VIDEO_SOURCE, createWindow, log, construct_argument_parser
+from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window
 
 X_COORD = []
 Y_COORD = []
@@ -23,6 +22,7 @@ class BackgroundSubtractionModel(object):
         self.args = construct_argument_parser()
         self.backgroundModel = {}
 
+    # TODO refactor because it's gross
     def create_background_model(self):
         noWaitingFrames = self.args["waiting_frames"]
         print("Calculating the background model. Please wait {0} seconds".format(noWaitingFrames))
@@ -33,11 +33,9 @@ class BackgroundSubtractionModel(object):
         movingAverage = np.float32(frame)
         for i in range(noWaitingFrames):
             grabbed, current_frame = camera.read()
-
             # if frame could not be grabbed, we reached the end of video
             if not grabbed:
                 break
-
             cv2.accumulateWeighted(current_frame, movingAverage, self.args["threshold"])
             # do the drawing stuff
             bcgrModel = cv2.convertScaleAbs(movingAverage)
@@ -49,30 +47,18 @@ class BackgroundSubtractionModel(object):
         camera.release()
         log("Opened background model window for: {0}".format(bcgrModel))
         self.backgroundModel = bcgrModel
+        # show the background model
+        create_window("Background Model", self.backgroundModel)
 
     def detect_fish(self, camera):
-        print("Start Fish detection.")
-        # show the background model
-        createWindow("Background Model", self.backgroundModel)
-        while 1:
-            grabbed, currentFrame = camera.read()
+        grabbed, currentFrame = camera.read()
 
-            # if frame could not be grabbed, we reached the end of video
-            if not grabbed:
-                break
+        # if frame could not be grabbed, we reached the end of video
+        if grabbed:
+            self.use_background_subtraction_on(currentFrame)
 
-            self.useBackgroundSubtractionOnCurrentFrame(currentFrame)
 
-            # if the `q` key is pressed, break from the lop
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord("q"):
-                log("Pressed 'q' to exit.")
-                break
-        from MainProgram import close_capture_window
-        close_capture_window(camera)
-        log("Process finished.")
-
-    def drawPoints(self, contours, currentFrame):
+    def draw_points(self, contours, currentFrame):
         # loop over the contours
         for c in contours:
             # if the contour is too small, ignore it
@@ -86,36 +72,36 @@ class BackgroundSubtractionModel(object):
             cv2.circle(currentFrame, (x + w / 2, y + h / 2), 5, (0, 255, 0), -1)
 
     # convert current frame to grey scale and blur it
-    def convertToGreyScaleAndBlur(self, currentFrame):
+    def convert_to_grey_scale_and_blur(self, currentFrame):
         differenceImage = cv2.absdiff(self.backgroundModel, currentFrame)
-        createWindow("Frame Delta", differenceImage)
+        create_window("Frame Delta", differenceImage)
         gray = cv2.cvtColor(differenceImage, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
         log("Successfully converted to greyscale and blurred.")
         return gray
 
     # dilate the threshold image to fill in holes, then find contours on threshold image
-    def findContours(self, thresh):
+    def find_contours(self, thresh):
         im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         log("Successfully found contours.")
         return contours
 
-    def useBackgroundSubtractionOnCurrentFrame(self, currentFrame):
-        gray = self.convertToGreyScaleAndBlur(currentFrame)
+    def use_background_subtraction_on(self, currentFrame):
+        gray = self.convert_to_grey_scale_and_blur(currentFrame)
 
         # compute the absolute difference between the current frame and background frame
         threshold = cv2.dilate(cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1], None, iterations=2)
-        contours = self.findContours(threshold)
+        contours = self.find_contours(threshold)
 
-        self.drawPoints(contours, currentFrame)
+        self.draw_points(contours, currentFrame)
 
         log("X coord: {0}".format(X_COORD))
         log("Y coord: {0}".format(Y_COORD))
         del X_COORD[:]
         del Y_COORD[:]
 
-        createWindow("Frame", currentFrame)
-        createWindow("Foreground", threshold)
+        create_window("Frame", currentFrame)
+        create_window("Foreground", threshold)
 
 
 # =====================================================================================================================
@@ -125,4 +111,14 @@ if __name__ == "__main__":
     bcgr.create_background_model()
     # start video file/webcam stream
     cam = cv2.VideoCapture(VIDEO_SOURCE)
-    bcgr.detect_fish(cam)
+
+    while 1:
+        bcgr.detect_fish(cam)
+
+        # if the `q` key is pressed, break from the lop
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord("q"):
+            log("Pressed 'q' to exit.")
+            break
+    close_capture_window(cam)
+    log("Process finished.")
