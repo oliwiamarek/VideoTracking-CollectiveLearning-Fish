@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import tkFileDialog
 from Tkinter import Tk
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from Globals import N_ROI_COLUMNS, N_ROI_ROWS
+from config import N_ROI_COLUMNS, N_ROI_ROWS, createWindow
 
 """
 FISH TRACKER CLASS
@@ -185,7 +185,13 @@ class FishTracker(object):
 
     def use_background_subtraction(self, cap):
         self.bcgSubtraction.create_background_model()
-        self.bcgSubtraction.detect_fish()
+        # show the background model
+        createWindow("Background Model", self.bcgSubtraction.backgroundModel)
+        print("Start Fish detection.")
+        while cap.isOpened():
+            self.frame_no_list.append(cap.get(1))
+            self.update_fish_variables()
+            self.bcgSubtraction.detect_fish(cap)
 
     # TODO FIX
     def visualise_coordinates(self):

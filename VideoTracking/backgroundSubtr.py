@@ -9,8 +9,7 @@ import cv2
 
 # ===============================================
 # import global variables
-from Globals import VIDEO_SOURCE, MIN_AREA_SIZE, WAITING_FRAMES, THRESHOLD
-from Globals import log, createWindow
+from config import VIDEO_SOURCE, MIN_AREA_SIZE, WAITING_FRAMES, THRESHOLD, createWindow, log
 
 X_COORD = []
 Y_COORD = []
@@ -38,7 +37,7 @@ class BackgroundSubtractionModel(object):
     def create_background_model(self):
         noWaitingFrames = self.args["waiting_frames"]
         print("Calculating the background model. Please wait {0} seconds".format(noWaitingFrames))
-        global bcgrModel
+        bcgrModel = {}
         # start video file/webcam stream
         camera = cv2.VideoCapture(VIDEO_SOURCE)
         ret, frame = camera.read()
@@ -55,16 +54,17 @@ class BackgroundSubtractionModel(object):
             bcgrModel = cv2.convertScaleAbs(movingAverage)
             log("Frame number: {0} done successfully.".format(i))
         print("Model calculated")
+        if bcgrModel is None:
+            log("bcgrModel not assigned.")
+            raise NameError("BcgrModel not assigned")
         camera.release()
         log("Opened background model window for: {0}".format(bcgrModel))
         self.backgroundModel = bcgrModel
 
-    def detect_fish(self):
+    def detect_fish(self, camera):
         print("Start Fish detection.")
-        # start video file/webcam stream
-        camera = cv2.VideoCapture(VIDEO_SOURCE)
         # show the background model
-        createWindow("Background Model", bcgrModel)
+        createWindow("Background Model", self.backgroundModel)
         while 1:
             grabbed, currentFrame = camera.read()
 
@@ -135,4 +135,6 @@ if __name__ == "__main__":
     bcgr = BackgroundSubtractionModel()
     bcgr.construct_argument_parser()
     bcgr.create_background_model()
-    bcgr.detect_fish()
+    # start video file/webcam stream
+    cam = cv2.VideoCapture(VIDEO_SOURCE)
+    bcgr.detect_fish(cam)

@@ -7,8 +7,8 @@ import cv2
 import os
 import sys
 from FishTracker import FishTracker
-from Globals import MANUAL
-from Globals import calculate_frames, close_capture_window
+from config import MANUAL
+from config import calculate_frames, close_capture_window
 
 '''
 ===========================================================================
