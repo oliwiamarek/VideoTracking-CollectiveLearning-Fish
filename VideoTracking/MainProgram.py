@@ -80,10 +80,9 @@ def track_fish(capture):
             log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))
             break
         # if the `q` key is pressed, break from the loop
-        # Turns out I needed to let OpenCV start handling events,
-        # it wasn't handling the WM_PAINT event. Adding cv2.waitKey() fixed this.
-        # https://stackoverflow.com/questions/8894451/opencv-shows-gray-window?utm_medium=organic&utm_source
-        # =google_rich_qa&utm_campaign=google_rich_qa
+        # Turns out I needed to let OpenCV start handling events. The cv::waitKey(n) function in OpenCV is used to
+        # introduce a delay of n milliseconds while rendering images to windows
+        # https://codeyarns.com/2015/01/20/how-to-use-opencv-waitkey-in-python/
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             log("Pressed 'q' to exit.")
