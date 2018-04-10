@@ -9,7 +9,7 @@ import cv2
 
 # ===============================================
 # import global variables
-from config import VIDEO_SOURCE, MIN_AREA_SIZE, WAITING_FRAMES, THRESHOLD, createWindow, log
+from config import VIDEO_SOURCE, createWindow, log, construct_argument_parser
 
 X_COORD = []
 Y_COORD = []
@@ -20,19 +20,8 @@ Y_COORD = []
 
 class BackgroundSubtractionModel(object):
     def __init__(self):
-        self.args = {}
+        self.args = construct_argument_parser()
         self.backgroundModel = {}
-
-    # construct the argument parser and parse the arguments
-    # look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
-    def construct_argument_parser(self):
-        ap = argparse.ArgumentParser()
-        ap.add_argument("-a", "--min-area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
-        ap.add_argument("-f", "--waiting-frames", type=int, default=WAITING_FRAMES,
-                        help="number of frames used to calculate bcgr model")
-        ap.add_argument("-t", "--threshold", type=float, default=THRESHOLD,
-                        help="threshold used in bcgr subtraction average calculation")
-        self.args = vars(ap.parse_args())
 
     def create_background_model(self):
         noWaitingFrames = self.args["waiting_frames"]
@@ -133,7 +122,6 @@ class BackgroundSubtractionModel(object):
 
 if __name__ == "__main__":
     bcgr = BackgroundSubtractionModel()
-    bcgr.construct_argument_parser()
     bcgr.create_background_model()
     # start video file/webcam stream
     cam = cv2.VideoCapture(VIDEO_SOURCE)

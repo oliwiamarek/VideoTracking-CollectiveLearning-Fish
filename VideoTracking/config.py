@@ -1,3 +1,5 @@
+import argparse
+
 import cv2
 
 '''
@@ -33,14 +35,18 @@ def createWindow(title, variable):
     cv2.imshow(title, variable)
 
 
-def calculate_frames(capture, seconds):
-    try:
-        return int(seconds * capture.get(5))
-    except TypeError:
-        print("Cannot calculate frames due to wrong values: seconds: {0}, capture: {1}".format(seconds, capture.get(5)))
-        raise
-
-
 def close_capture_window(capture):
     capture.release()
     cv2.destroyAllWindows()
+
+
+# construct the argument parser and parse the arguments
+# look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
+def construct_argument_parser():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-a", "--min-area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
+    ap.add_argument("-f", "--waiting-frames", type=int, default=WAITING_FRAMES,
+                    help="number of frames used to calculate bcgr model")
+    ap.add_argument("-t", "--threshold", type=float, default=THRESHOLD,
+                    help="threshold used in bcgr subtraction average calculation")
+    return vars(ap.parse_args())

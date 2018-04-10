@@ -8,7 +8,7 @@ import os
 import sys
 from FishTracker import FishTracker
 from config import MANUAL
-from config import calculate_frames, close_capture_window
+from config import close_capture_window
 
 '''
 ===========================================================================
@@ -55,6 +55,14 @@ def trackFish(capture):
             tracker.use_background_subtraction(capture)
         if capture.get(1) > STOP_FRAME_NO:
             break
+
+
+def calculate_frames(capture, seconds):
+    try:
+        return int(seconds * capture.get(5))
+    except TypeError:
+        print("Cannot calculate frames due to wrong values: seconds: {0}, capture: {1}".format(seconds, capture.get(5)))
+        raise
 
 
 '''
