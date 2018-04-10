@@ -6,6 +6,8 @@
 import cv2
 import os
 import sys
+import tkFileDialog
+from Tkinter import Tk
 from FishTracker import FishTracker
 from config import MANUAL
 from config import close_capture_window
@@ -15,6 +17,19 @@ from config import close_capture_window
 FUNCTIONS
 ===========================================================================
 '''
+
+
+def get_video_file():
+    # hides the Tk window
+    video_filepath = {}
+    root = Tk()
+    root.withdraw()
+    # ask for video file
+    while not video_filepath:
+        # restrict to only videos
+        video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
+                                                      filetypes=[("Video Files", "*.avi *.mp4")])
+    return video_filepath
 
 
 def calculate_video_duration():
@@ -37,11 +52,11 @@ def print_frame_rate():
 
 
 # TODO move to Fish tracer and make the filepath private
-def get_name_from_path():
+def get_name_from_path(path):
     try:
-        return os.path.splitext(os.path.basename(tracker.video_filepath))[0]
+        return os.path.splitext(os.path.basename(path))[0]
     except TypeError:
-        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(tracker.video_filepath))
+        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(path))
         raise
 
 
@@ -50,6 +65,7 @@ def trackFish(capture):
         # reset mouse coordinates
         del tracker.current_frame_fish_coord[:]
         if MANUAL:
+            tracker.create_record_window()
             tracker.track_fish(capture)
         else:
             tracker.use_background_subtraction(capture)
@@ -74,13 +90,12 @@ MAIN FUNCTION
 if __name__ == "__main__":
     try:
         tracker = FishTracker()
-        tracker.get_video_file()
-        filename = get_name_from_path()
+        filePath = get_video_file()
+        filename = get_name_from_path(filePath)
+        cap = cv2.VideoCapture(filePath)
 
-        cap = cv2.VideoCapture(tracker.video_filepath)
         print_frame_rate()
         calculate_video_duration()
-        tracker.create_record_window()
         trackFish(cap)
 
         close_capture_window(cap)

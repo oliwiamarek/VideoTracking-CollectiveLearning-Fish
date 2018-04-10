@@ -8,7 +8,7 @@ GLOBAL VARIABLES
 ===========================================================================
 '''
 
-MANUAL = False  # Flag to use the manual or automated version of code
+MANUAL = True  # Flag to use the manual or automated version of code
 VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
 DEBUG = True  # used to print debug logs
 WAITING_FRAMES = 200  # default number of frames used to calculate bcgr model
@@ -50,3 +50,7 @@ def construct_argument_parser():
     ap.add_argument("-t", "--threshold", type=float, default=THRESHOLD,
                     help="threshold used in bcgr subtraction average calculation")
     return vars(ap.parse_args())
+
+
+def return_array(array, start, element_no):
+    return array[start::element_no]

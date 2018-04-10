@@ -1,19 +1,13 @@
 import cv2
 import matplotlib.pyplot as plt
-import tkFileDialog
-from Tkinter import Tk
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import N_ROI_COLUMNS, N_ROI_ROWS, createWindow
+from config import N_ROI_COLUMNS, N_ROI_ROWS, createWindow, return_array
 
 """
 FISH TRACKER CLASS
 https://introlab.github.io/find-object/s
 http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html#matcher
 """
-
-
-def return_array(array, start, element_no):
-    return array[start::element_no]
 
 
 class FishTracker(object):
@@ -29,7 +23,6 @@ class FishTracker(object):
         self.frame_no = 0
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
         self.bcgSubtraction = BackgroundSubtraction()
-        self.bcgSubtraction.construct_argument_parser()
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """
@@ -94,16 +87,6 @@ class FishTracker(object):
         self.all_fish_x_coord.append("")
         self.all_fish_y_coord.append("")
         return roi
-
-    def get_video_file(self):
-        # hides the Tk window
-        root = Tk()
-        root.withdraw()
-        # ask for video file
-        while not self.video_filepath:
-            # restrict to only videos
-            self.video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
-                                                               filetypes=[("Video Files", "*.avi *.mp4")])
 
     @staticmethod
     def is_not_string(string):
