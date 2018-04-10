@@ -8,7 +8,8 @@ import cv2
 
 # ===============================================
 # import global variables
-from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window
+from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window, N_ROI_ROWS, \
+    N_ROI_COLUMNS
 
 X_COORD = []
 Y_COORD = []
@@ -21,6 +22,8 @@ class BackgroundSubtractionModel(object):
     def __init__(self):
         self.args = construct_argument_parser()
         self.backgroundModel = {}
+        self.current_frame = {}
+        self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
 
     # TODO refactor because it's gross
     def create_background_model(self):
@@ -52,6 +55,8 @@ class BackgroundSubtractionModel(object):
 
     def detect_fish(self, camera):
         grabbed, currentFrame = camera.read()
+        self.current_frame = currentFrame
+        self.roi_video()
 
         # if frame could not be grabbed, we reached the end of video
         if grabbed:
@@ -94,6 +99,9 @@ class BackgroundSubtractionModel(object):
 
         self.draw_points(contours, currentFrame)
 
+        # self.frame_no_list.append(capture.get(1))
+        # self.update_fish_variables()
+
         log("X coord: {0}".format(X_COORD))
         log("Y coord: {0}".format(Y_COORD))
         del X_COORD[:]
@@ -101,6 +109,27 @@ class BackgroundSubtractionModel(object):
 
         create_window("Frame", currentFrame)
         create_window("Foreground", threshold)
+
+    def roi_video(self):
+        height, width, ch = self.current_frame.shape
+        roi_height = height / N_ROI_ROWS
+        roi_width = width / N_ROI_COLUMNS
+
+        self.roi_mid_width = roi_width
+        self.roi_first_height = roi_height
+        self.roi_second_height = roi_height * 2
+
+        # possibly unnecessary
+        images = []
+        for row in range(0, N_ROI_ROWS):
+            for column in range(0, N_ROI_COLUMNS):
+                row_height = row * roi_height
+                column_width = column * roi_width
+                tmp_image = self.current_frame[
+                            row_height: (row + 1) * roi_height,
+                            column_width:(column + 1) * roi_width
+                            ]
+                images.append(tmp_image)
 
 
 # =====================================================================================================================

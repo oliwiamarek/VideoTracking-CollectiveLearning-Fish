@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, create_window, log
+from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, log
 
 """
 FISH TRACKER CLASS
@@ -23,6 +23,10 @@ class FishTracker(object):
         self.frame_no = 0
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
         self.bcgSubtraction = BackgroundSubtraction()
+
+    def create_background_model(self):
+        self.bcgSubtraction.create_background_model()
+        log("Start Fish detection.")
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """
@@ -125,6 +129,7 @@ class FishTracker(object):
         self.previous_frame = self.current_frame.copy()
         # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        # possibly move to outside the loop
         self.roi_video()
 
         if ret:  # check if the frame has been read properly
@@ -159,10 +164,6 @@ class FishTracker(object):
                 'no_fish': roi[r],
                 'frame': self.frame_no
             })
-
-    def create_background_model(self):
-        self.bcgSubtraction.create_background_model()
-        log("Start Fish detection.")
 
     def use_background_subtraction(self, cap):
         self.frame_no_list.append(cap.get(1))
