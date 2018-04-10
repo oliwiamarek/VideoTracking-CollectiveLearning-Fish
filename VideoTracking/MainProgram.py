@@ -37,7 +37,7 @@ def calculate_video_duration():
     global stop_frame_no
     # calculate start and stop frames (normalized between 0 and 1)
     start_frame_no = calculate_frames(cap, 1)
-    stop_frame_no = calculate_frames(cap, 2)
+    stop_frame_no = calculate_frames(cap, cap.get(7) / cap.get(5))
 
     # initialize the starting frame of the video object to start_frame_no
     cap.set(1, start_frame_no)
@@ -61,10 +61,15 @@ def get_name_from_path(path):
 
 
 def track_fish(capture):
+    times = 0
+    print("Start Fish detection.")
     if MANUAL:
         tracker.create_record_window()
-
+    else:
+        tracker.create_background_model()
     while capture.isOpened():
+        times += 1
+        log("TIMES: {0}".format(times))
         # reset mouse coordinates
         del tracker.current_frame_fish_coord[:]
         if MANUAL:
@@ -72,6 +77,7 @@ def track_fish(capture):
         else:
             tracker.use_background_subtraction(capture)
         if capture.get(1) > stop_frame_no:
+            log("{0} Less than stop frame no ({1})".format(capture.get(1), stop_frame_no))
             break
 
 
@@ -102,7 +108,6 @@ if __name__ == "__main__":
         close_capture_window(cap)
         log("Tracking process finished.")
 
-        # TODO have a wrapper around it that calls it with a name that's specified
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
         tracker.visualise_coordinates()

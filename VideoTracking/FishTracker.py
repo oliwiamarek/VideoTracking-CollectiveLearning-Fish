@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, create_window
+from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, create_window, log
 
 """
 FISH TRACKER CLASS
@@ -160,15 +160,14 @@ class FishTracker(object):
                 'frame': self.frame_no
             })
 
-    def use_background_subtraction(self, cap):
+    def create_background_model(self):
         self.bcgSubtraction.create_background_model()
-        # show the background model
-        create_window("Background Model", self.bcgSubtraction.backgroundModel)
-        print("Start Fish detection.")
-        while cap.isOpened():
-            self.frame_no_list.append(cap.get(1))
-            self.update_fish_variables()
-            self.bcgSubtraction.detect_fish(cap)
+        log("Start Fish detection.")
+
+    def use_background_subtraction(self, cap):
+        self.frame_no_list.append(cap.get(1))
+        self.update_fish_variables()
+        self.bcgSubtraction.detect_fish(cap)
 
     def visualise_coordinates(self):
         self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',

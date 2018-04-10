@@ -25,10 +25,10 @@ class BackgroundSubtractionModel(object):
     # TODO refactor because it's gross
     def create_background_model(self):
         noWaitingFrames = self.args["waiting_frames"]
-        print("Calculating the background model. Please wait {0} seconds".format(noWaitingFrames))
         bcgrModel = {}
         # start video file/webcam stream
         camera = cv2.VideoCapture(VIDEO_SOURCE)
+        print("Calculating the background model. Please wait {0} seconds".format(noWaitingFrames / camera.get(5)))
         ret, frame = camera.read()
         movingAverage = np.float32(frame)
         for i in range(noWaitingFrames):
