@@ -57,7 +57,6 @@ class BackgroundSubtractionModel(object):
         if grabbed:
             self.use_background_subtraction_on(currentFrame)
 
-
     def draw_points(self, contours, currentFrame):
         # loop over the contours
         for c in contours:
