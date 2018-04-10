@@ -6,8 +6,7 @@ GLOBAL VARIABLES
 ===========================================================================
 '''
 
-STOP_FRAME_NO = 0
-MANUAL = True
+MANUAL = False  # Flag to use the manual or automated version of code
 VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
 DEBUG = True  # used to print debug logs
 WAITING_FRAMES = 200  # default number of frames used to calculate bcgr model
