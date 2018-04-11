@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import N_ROI_COLUMNS, N_ROI_ROWS, return_array, is_not_string, log
+from config import return_array, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
 
 """
 FISH TRACKER CLASS
@@ -21,11 +21,10 @@ class FishTracker(object):
         self.video_filepath = ""
         self.window_name = "Fishies"
         self.frame_no = 0
-        self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
-        self.bcgSubtraction = BackgroundSubtraction()
+        self.bcg_subtraction = BackgroundSubtraction()
 
     def create_background_model(self):
-        self.bcgSubtraction.create_background_model()
+        self.bcg_subtraction.create_background_model()
         log("Start Fish detection.")
 
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
@@ -75,17 +74,17 @@ class FishTracker(object):
             y = coordinates[1]
             self.all_fish_x_coord.append(x)
             self.all_fish_y_coord.append(y)
-            if y < self.roi_mid_width and x < self.roi_first_height:
+            if y < roi_width() and x < roi_first_height():
                 roi[0] += 1
-            elif y < self.roi_mid_width and x < self.roi_second_height:
+            elif y < roi_width() and x < roi_second_height():
                 roi[1] += 1
-            elif y < self.roi_mid_width and x > self.roi_second_height:
+            elif y < roi_width() and x > roi_second_height():
                 roi[2] += 1
-            elif y > self.roi_mid_width and x < self.roi_first_height:
+            elif y > roi_width() and x < roi_first_height():
                 roi[3] += 1
-            elif y > self.roi_mid_width and x < self.roi_second_height:
+            elif y > roi_width() and x < roi_second_height():
                 roi[4] += 1
-            elif y > self.roi_mid_width and x > self.roi_second_height:
+            elif y > roi_width() and x > roi_second_height():
                 roi[5] += 1
         self.all_fish_x_coord.append("")
         self.all_fish_y_coord.append("")
@@ -101,26 +100,6 @@ class FishTracker(object):
                     output_file.write('{0},'.format(value))
             output_file.write('\n')
 
-    def roi_video(self):
-        height, width, ch = self.current_frame.shape
-        roi_height = height / N_ROI_ROWS
-        roi_width = width / N_ROI_COLUMNS
-
-        self.roi_mid_width = roi_width
-        self.roi_first_height = roi_height
-        self.roi_second_height = roi_height * 2
-
-        images = []
-        for row in range(0, N_ROI_ROWS):
-            for column in range(0, N_ROI_COLUMNS):
-                row_height = row * roi_height
-                column_width = column * roi_width
-                tmp_image = self.current_frame[
-                            row_height: (row + 1) * roi_height,
-                            column_width:(column + 1) * roi_width
-                            ]
-                images.append(tmp_image)
-
     # todo add possibility to redo the whole frame
     def track_fish(self, capture):
         # read next frame
@@ -130,7 +109,7 @@ class FishTracker(object):
         # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # possibly move to outside the loop
-        self.roi_video()
+        roi_video()
 
         if ret:  # check if the frame has been read properly
             fr_len = len(self.frame_no_list)
@@ -166,9 +145,9 @@ class FishTracker(object):
             })
 
     def use_background_subtraction(self, cap):
+        self.current_frame_fish_coord = self.bcg_subtraction.detect_fish(cap)
         self.frame_no_list.append(cap.get(1))
         self.update_fish_variables()
-        self.bcgSubtraction.detect_fish(cap)
 
     def visualise_coordinates(self):
         self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',

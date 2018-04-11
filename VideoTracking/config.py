@@ -16,6 +16,7 @@ THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average 
 N_ROI_ROWS = 2
 N_ROI_COLUMNS = 3
 
+
 '''
 ===========================================================================
 GLOBAL FUNCTIONS
@@ -58,3 +59,23 @@ def return_array(array, start, element_no):
 def is_not_string(string):
     # type: (str) -> bool
     return type(string) is not str
+
+
+def roi_video(current_frame):
+    global roi_first_height, roi_second_height, roi_width
+    height, width, ch = current_frame.shape
+    roi_width = width / N_ROI_COLUMNS
+    roi_first_height = height / N_ROI_ROWS
+    roi_second_height = roi_first_height * 2
+
+
+def roi_first_height():
+    return roi_first_height
+
+
+def roi_second_height():
+    return roi_second_height
+
+
+def roi_width():
+    return roi_width
