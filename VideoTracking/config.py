@@ -26,6 +26,9 @@ GLOBAL FUNCTIONS
 
 # Used for printing out things for debugging purposes
 def log(s):
+    """
+    :type s: str
+    """
     if DEBUG:
         print s
 
@@ -52,7 +55,7 @@ def construct_argument_parser():
     return vars(ap.parse_args())
 
 
-def return_array(array, start, element_no):
+def get_array_increments(array, start, element_no):
     return array[start::element_no]
 
 

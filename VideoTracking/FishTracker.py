@@ -1,7 +1,7 @@
 import cv2
 import matplotlib.pyplot as plt
 from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
-from config import return_array, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
+from config import get_array_increments, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
 
 """
 FISH TRACKER CLASS
@@ -40,7 +40,7 @@ class FishTracker(object):
         plt.figure()
         no_fish = len(self.current_frame_fish_coord)
         for x in xrange(no_fish):
-            plt.plot(return_array(x_axis, x, no_fish + 1), return_array(y_axis, x, no_fish + 1))
+            plt.plot(get_array_increments(x_axis, x, no_fish + 1), get_array_increments(y_axis, x, no_fish + 1))
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
