@@ -54,6 +54,35 @@ class TestConfig(unittest.TestCase):
         array = [1, 2, 3]
         self.assertRaises(ValueError, config.get_array_increments, array, 0, 0)
 
+    def test_is_not_string_returnsRightValues(self):
+        self.assertFalse(config.is_not_string(''))
+        self.assertFalse(config.is_not_string('foo'))
+        self.assertFalse(config.is_not_string('a'))
+        self.assertTrue(config.is_not_string(None))
+        self.assertTrue(config.is_not_string(True))
+        self.assertTrue(config.is_not_string(1))
+        self.assertTrue(config.is_not_string(1.01))
+        self.assertTrue(config.is_not_string({"object": {}, "name": "foo"}))
+        self.assertTrue(config.is_not_string([1, 2, 3]))
+
+    def test_roi_video_setsValuesRight(self):
+        mockFrame = type('frame', (object,), {'shape': [4, 9, 16]})()
+        expectedWidth = 3
+        expectedFirstHeight = 2
+        expectedSecondHeight = 4
+        config.roi_video(mockFrame)
+        resultWidth = config.roi_width
+        resultFHight = config.roi_first_height
+        resultSHight = config.roi_second_height
+        self.assertEqual(expectedWidth, resultWidth)
+        self.assertEqual(expectedFirstHeight, resultFHight)
+        self.assertEqual(expectedSecondHeight, resultSHight)
+
+    def test_roi_video_incorrectAttributeRaisesAttributeError(self):
+        self.assertRaises(AttributeError, config.roi_video, 1)
+        self.assertRaises(AttributeError, config.roi_video, type('frame', (object,), {'not-shape': {"name": "foo"}})())
+        self.assertRaises(AttributeError, config.roi_video, [1, 2, 3])
+
 
 if __name__ == '__main__':
     unittest.main()
