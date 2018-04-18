@@ -1,3 +1,5 @@
+from PIL import Image
+
 import numpy as np
 import cv2
 
@@ -9,9 +11,6 @@ import cv2
 # ===============================================
 # import global variables
 from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window, roi_video
-
-X_COORD = []
-Y_COORD = []
 
 
 # ===============================================
@@ -50,6 +49,7 @@ class BackgroundSubtractor(object):
         camera.release()
         log("Opened background model window for: {0}".format(bcgr_model))
         self.background_model = bcgr_model
+        cv2.imwrite("backgroundModel.png", bcgr_model)
         # show the background model
         create_window("Background Model", self.background_model)
 
@@ -73,12 +73,21 @@ class BackgroundSubtractor(object):
             if cv2.contourArea(c) < self.args["min_area"]:
                 continue
             # compute the bounding box for the contour, draw it on the frame
-            (x, y, w, h) = cv2.boundingRect(c)
-            X_COORD.append(x)
-            Y_COORD.append(y)
-            self.fish_coordinates.append(('{0}, {1}'.format(x, y)))
-            # x + w/2 because (x,y) is top left corner of contour, (x+w, y+h) is bottom right so the halves are middle
-            cv2.circle(current_frame, (x + w / 2, y + h / 2), 5, (0, 255, 0), -1)
+            rect = cv2.minAreaRect(c)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+
+            M = cv2.moments(c)
+            cX = int(M["m10"] / M["m00"])
+            cY = int(M["m01"] / M["m00"])
+
+            if self.is_darker_at(cX, cY):
+                continue
+
+            self.fish_coordinates.append(('{0}, {1}'.format(cX, cY)))
+
+            cv2.circle(current_frame, (cX, cY), 5, (0, 255, 0), -1)
+            cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
 
     # convert current frame to grey scale and blur it
     def convert_to_grey_scale_and_blur(self, current_frame):
@@ -94,6 +103,7 @@ class BackgroundSubtractor(object):
     def find_contours(self, thresh):
         im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         log("Successfully found contours.")
+        contours = [cv2.approxPolyDP(contour, 0.01, True) for contour in contours]
         return contours
 
     def use_background_subtraction_on(self, current_frame):
@@ -101,6 +111,7 @@ class BackgroundSubtractor(object):
 
         # compute the absolute difference between the current frame and background frame
         threshold = cv2.dilate(cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1], None, iterations=2)
+        cv2.imwrite("currentFrame.png", current_frame)
         contours = self.find_contours(threshold)
 
         self.draw_points(contours, current_frame)
@@ -108,13 +119,28 @@ class BackgroundSubtractor(object):
         # self.frame_no_list.append(capture.get(1))
         # self.update_fish_variables()
 
-        log("X coord: {0}".format(X_COORD))
-        log("Y coord: {0}".format(Y_COORD))
-        del X_COORD[:]
-        del Y_COORD[:]
+        log("Coord: {0}".format(self.fish_coordinates))
 
         create_window("Frame", current_frame)
         create_window("Foreground", threshold)
+
+    def is_darker_at(self, xCoord, yCoord):
+        # if coordinates between x miedzy 1 a 239 and y miedzy 3 a 444 - sprawdz czy kolor ciemnoszary > 50
+        currentFrameImg = self.open_image_from("currentFrame.png")
+        backgroundImg = self.open_image_from("backgroundModel.png")
+        frame_brightness = self.get_brightness_of(currentFrameImg, xCoord, yCoord)
+        background_brightness = self.get_brightness_of(backgroundImg, xCoord, yCoord)
+        if xCoord < 239 and yCoord < 444:
+            return frame_brightness > 50
+        return (background_brightness - frame_brightness) < 0
+
+    def get_brightness_of(self, frame, xCoord, yCoord):
+        R, G, B = frame[xCoord, yCoord]
+        return (R + G + B) / 3
+
+    def open_image_from(self, filename):
+        image = Image.open(filename)
+        return image.load()
 
 
 # =====================================================================================================================
