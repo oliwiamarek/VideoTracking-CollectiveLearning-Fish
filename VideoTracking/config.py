@@ -8,10 +8,10 @@ GLOBAL VARIABLES
 '''
 
 MANUAL = False  # Flag to use the manual or automated version of code
-VIDEO_SOURCE = "ExampleVid/week4.mp4"  # path to video
+VIDEO_SOURCE = "ExampleVid/trial2.mp4"  # path to video
 DEBUG = True  # used to print debug logs
-WAITING_FRAMES = 200  # default number of frames used to calculate bcgr model
-MIN_AREA_SIZE = 1300  # default minimum area size for contours
+WAITING_FRAMES = 800  # default number of frames used to calculate bcgr model
+MIN_AREA_SIZE = 600  # default minimum area size for contours
 THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average calculation
 N_ROI_ROWS = 2
 N_ROI_COLUMNS = 3

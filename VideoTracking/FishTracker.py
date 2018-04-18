@@ -1,6 +1,6 @@
 import cv2
 import matplotlib.pyplot as plt
-from backgroundSubtr import BackgroundSubtractionModel as BackgroundSubtraction
+from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
 from config import get_array_increments, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
 
 """
@@ -12,13 +12,9 @@ http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d
 
 class FishTracker(object):
     def __init__(self):
-        # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
-        # fish_x, fish_y - lists to hold coordinates of all fish in all frames
-        # TODO delete: fish_number_list
         self.current_frame_fish_coord, self.all_fish_x_coord, self.all_fish_y_coord = [], [], []
         self.roi_fish_count, self.frame_no_list = [], []
         self.current_frame, self.previous_frame = {}, {}
-        self.video_filepath = ""
         self.window_name = "Fishies"
         self.frame_no = 0
         self.bcg_subtraction = BackgroundSubtraction()
@@ -27,6 +23,7 @@ class FishTracker(object):
         self.bcg_subtraction.create_background_model()
         log("Start Fish detection.")
 
+    # no test
     def create_figure(self, x_axis, y_axis, title, x_label, y_label):
         """
         :type x_axis: List[int]
@@ -45,11 +42,13 @@ class FishTracker(object):
         plt.xlabel(x_label)
         plt.ylabel(y_label)
 
+    # no test
     def create_record_window(self):
         self.window_name = 'Fishies'
         # normalize size of the window to every screen
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
+    # no test
     def display_frame_text(self, frame, capture):
         self.frame_no = capture.get(1)
         cv2.putText(frame, 'frame ' + str(self.frame_no), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
@@ -66,6 +65,7 @@ class FishTracker(object):
             self.current_frame = self.previous_frame.copy()
             del self.current_frame_fish_coord[-1]
 
+    # todo test
     def get_no_fish_for_ROI(self):
         roi = [0, 0, 0, 0, 0, 0]
         for fish in self.current_frame_fish_coord:
@@ -122,6 +122,7 @@ class FishTracker(object):
                 cv2.imshow(self.window_name, self.current_frame)
                 self.track_fish_through_frames(capture)
 
+    # no test
     def track_fish_through_frames(self, capture):
         # press n to get to next frame
         if cv2.waitKey(1) % 0xFF == ord('n'):
@@ -145,9 +146,11 @@ class FishTracker(object):
             })
 
     def use_background_subtraction(self, cap):
-        self.current_frame_fish_coord = self.bcg_subtraction.detect_fish(cap)
-        self.frame_no_list.append(cap.get(1))
-        self.update_fish_variables()
+        current_fish_coord = self.bcg_subtraction.detect_fish(cap)
+        if current_fish_coord:
+            self.current_frame_fish_coord = current_fish_coord
+            self.frame_no_list.append(cap.get(1))
+            self.update_fish_variables()
 
     def visualise_coordinates(self):
         self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',

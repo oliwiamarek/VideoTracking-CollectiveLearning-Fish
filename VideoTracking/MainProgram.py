@@ -20,7 +20,9 @@ FUNCTIONS
 '''
 
 
+# No tests
 def get_video_file():
+    # type: () -> str
     # hides the Tk window
     video_filepath = {}
     root = Tk()
@@ -33,22 +35,22 @@ def get_video_file():
     return video_filepath
 
 
-def calculate_video_duration():
+def calculate_video_duration(capture):
     global stop_frame_no
     # calculate start and stop frames (normalized between 0 and 1)
-    start_frame_no = calculate_frames(cap, 1)
-    stop_frame_no = calculate_frames(cap, 40)
+    start_frame_no = calculate_frames(capture, 1)
+    stop_frame_no = calculate_frames(capture, capture.get(7) / capture.get(5))
 
     # initialize the starting frame of the video object to start_frame_no
-    cap.set(1, start_frame_no)
+    capture.set(1, start_frame_no)
 
 
-def print_frame_rate():
+def print_frame_rate(capture):
     try:
-        print('frame rate per second = ' + '%.2f' % cap.get(5))
-        print('number of frames = ' + '%.2f' % cap.get(7))
+        print('frame rate per second = ' + '%.2f' % capture.get(5))
+        print('number of frames = ' + '%.2f' % capture.get(7))
     except TypeError:
-        print("Capture.get returned type different to int")
+        print("Capture.get returned type different to float")
         raise
 
 
@@ -60,6 +62,7 @@ def get_name_from_path(path):
         raise
 
 
+# todo tests
 def track_fish(capture):
     times = 0
     print("Start Fish detection.")
@@ -68,6 +71,9 @@ def track_fish(capture):
     else:
         tracker.create_background_model()
     while capture.isOpened():
+        if capture.get(1) >= stop_frame_no:
+            log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))
+            break
         times += 1
         log("TIMES: {0}".format(times))
         # reset mouse coordinates
@@ -76,9 +82,6 @@ def track_fish(capture):
             tracker.track_fish(capture)
         else:
             tracker.use_background_subtraction(capture)
-        if capture.get(1) > stop_frame_no:
-            log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))
-            break
         # if the `q` key is pressed, break from the loop
         # Turns out I needed to let OpenCV start handling events. The cv::waitKey(n) function in OpenCV is used to
         # introduce a delay of n milliseconds while rendering images to windows
@@ -110,8 +113,8 @@ if __name__ == "__main__":
         filename = get_name_from_path(filePath)
         cap = cv2.VideoCapture(filePath)
 
-        print_frame_rate()
-        calculate_video_duration()
+        print_frame_rate(cap)
+        calculate_video_duration(cap)
         track_fish(cap)
         close_capture_window(cap)
         log("Tracking process finished.")

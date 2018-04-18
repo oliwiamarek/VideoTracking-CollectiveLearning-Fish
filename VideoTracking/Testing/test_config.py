@@ -31,7 +31,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(parser["threshold"], config.THRESHOLD)
         self.assertEqual(parser["min_area"], config.MIN_AREA_SIZE)
 
-    def test_return_array_returnsRightPartOfArray(self):
+    def test_get_array_increments_returnsRightPartOfArray(self):
         array = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         expected = [2, 4, 6, 8, 10]
         result = config.get_array_increments(array, 1, 2)
@@ -45,12 +45,12 @@ class TestConfig(unittest.TestCase):
         result = config.get_array_increments(array, 2, -1)
         self.assertEqual(expected, result)
 
-    def test_return_array_outOfBoundsReturnsEmptyArray(self):
+    def test_get_array_increments_outOfBoundsReturnsEmptyArray(self):
         array = [1, 2, 3]
         result = config.get_array_increments(array, 3, 6)
         self.assertEqual(result, [])
 
-    def test_return_array_zeroValuesThrowValueError(self):
+    def test_get_array_increments_zeroValuesThrowValueError(self):
         array = [1, 2, 3]
         self.assertRaises(ValueError, config.get_array_increments, array, 0, 0)
 
