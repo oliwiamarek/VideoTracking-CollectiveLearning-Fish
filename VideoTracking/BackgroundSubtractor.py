@@ -1,5 +1,3 @@
-from PIL import Image
-
 import numpy as np
 import cv2
 
@@ -10,7 +8,8 @@ import cv2
 
 # ===============================================
 # import global variables
-from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window, roi_video
+from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window, roi_video, \
+    is_between
 
 
 # ===============================================
@@ -49,7 +48,7 @@ class BackgroundSubtractor(object):
         camera.release()
         log("Opened background model window for: {0}".format(bcgr_model))
         self.background_model = bcgr_model
-        cv2.imwrite("backgroundModel.png", bcgr_model)
+        cv2.imwrite("Outputs/backgroundModel.png", bcgr_model)
         # show the background model
         create_window("Background Model", self.background_model)
 
@@ -70,24 +69,21 @@ class BackgroundSubtractor(object):
         # loop over the contours
         for c in contours:
             # if the contour is too small, ignore it
-            if cv2.contourArea(c) < self.args["min_area"]:
-                continue
-            # compute the bounding box for the contour, draw it on the frame
-            rect = cv2.minAreaRect(c)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
+            if cv2.contourArea(c) > self.args["min_area"]:
+                # compute the bounding box for the contour, draw it on the frame
+                rect = cv2.minAreaRect(c)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
 
-            M = cv2.moments(c)
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
+                M = cv2.moments(c)
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
 
-            if self.is_darker_at(cX, cY):
-                continue
+                if self.is_darker_at(cX, cY):
+                    self.fish_coordinates.append(('{0}, {1}'.format(cY, cX)))
 
-            self.fish_coordinates.append(('{0}, {1}'.format(cX, cY)))
-
-            cv2.circle(current_frame, (cX, cY), 5, (0, 255, 0), -1)
-            cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
+                    cv2.circle(current_frame, (cX, cY), 5, (0, 255, 0), -1)
+                    cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
 
     # convert current frame to grey scale and blur it
     def convert_to_grey_scale_and_blur(self, current_frame):
@@ -111,7 +107,6 @@ class BackgroundSubtractor(object):
 
         # compute the absolute difference between the current frame and background frame
         threshold = cv2.dilate(cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1], None, iterations=2)
-        cv2.imwrite("currentFrame.png", current_frame)
         contours = self.find_contours(threshold)
 
         self.draw_points(contours, current_frame)
@@ -125,22 +120,21 @@ class BackgroundSubtractor(object):
         create_window("Foreground", threshold)
 
     def is_darker_at(self, xCoord, yCoord):
+        # type: (int, int) -> bool
         # if coordinates between x miedzy 1 a 239 and y miedzy 3 a 444 - sprawdz czy kolor ciemnoszary > 50
-        currentFrameImg = self.open_image_from("currentFrame.png")
-        backgroundImg = self.open_image_from("backgroundModel.png")
-        frame_brightness = self.get_brightness_of(currentFrameImg, xCoord, yCoord)
-        background_brightness = self.get_brightness_of(backgroundImg, xCoord, yCoord)
-        if xCoord < 239 and yCoord < 444:
-            return frame_brightness > 50
-        return (background_brightness - frame_brightness) < 0
+        frame_brightness = self.get_brightness_of(self.current_frame, xCoord, yCoord)
+        background_brightness = self.get_brightness_of(self.background_model, xCoord, yCoord)
+        if is_between(183, 369, xCoord) and is_between(0, 270, yCoord):
+            return False
+        elif is_between(150, 1200, xCoord) and is_between(100, 650, yCoord):
+            return (background_brightness - frame_brightness) > -10
+        else:
+            return True
 
     def get_brightness_of(self, frame, xCoord, yCoord):
-        R, G, B = frame[xCoord, yCoord]
+        # type: (object, int, int) -> int
+        R, G, B = frame[yCoord, xCoord]
         return (R + G + B) / 3
-
-    def open_image_from(self, filename):
-        image = Image.open(filename)
-        return image.load()
 
 
 # =====================================================================================================================

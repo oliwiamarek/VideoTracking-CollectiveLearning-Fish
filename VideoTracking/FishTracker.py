@@ -60,7 +60,7 @@ class FishTracker(object):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.previous_frame = self.current_frame.copy()
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.current_frame_fish_coord.append('{0}, {1}'.format(x, y))
+            self.current_frame_fish_coord.append('{0}, {1}'.format(y, x))
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.current_frame = self.previous_frame.copy()
             del self.current_frame_fish_coord[-1]
@@ -74,17 +74,17 @@ class FishTracker(object):
             y = coordinates[1]
             self.all_fish_x_coord.append(x)
             self.all_fish_y_coord.append(y)
-            if y < roi_width() and x < roi_first_height():
+            if x < roi_width() and y < roi_first_height():
                 roi[0] += 1
-            elif y < roi_width() and x < roi_second_height():
+            elif x < roi_width() and y < roi_second_height():
                 roi[1] += 1
-            elif y < roi_width() and x > roi_second_height():
+            elif x < roi_width() and y > roi_second_height():
                 roi[2] += 1
-            elif y > roi_width() and x < roi_first_height():
+            elif x > roi_width() and y < roi_first_height():
                 roi[3] += 1
-            elif y > roi_width() and x < roi_second_height():
+            elif x > roi_width() and y < roi_second_height():
                 roi[4] += 1
-            elif y > roi_width() and x > roi_second_height():
+            elif x > roi_width() and y > roi_second_height():
                 roi[5] += 1
         self.all_fish_x_coord.append("")
         self.all_fish_y_coord.append("")

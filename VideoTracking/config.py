@@ -16,7 +16,6 @@ THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average 
 N_ROI_ROWS = 2
 N_ROI_COLUMNS = 3
 
-
 '''
 ===========================================================================
 GLOBAL FUNCTIONS
@@ -26,14 +25,13 @@ GLOBAL FUNCTIONS
 
 # Used for printing out things for debugging purposes
 def log(s):
-    """
-    :type s: str
-    """
+    # type: (str) -> type(None)
     if DEBUG:
         print s
 
 
 def create_window(title, variable):
+    # type: (str, object) -> None
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.imshow(title, variable)
 
@@ -56,6 +54,7 @@ def construct_argument_parser():
 
 
 def get_array_increments(array, start, element_no):
+    # type: (list, int, int) -> list
     return array[start::element_no]
 
 
@@ -66,9 +65,9 @@ def is_not_string(string):
 
 def roi_video(current_frame):
     global roi_first_height, roi_second_height, roi_width
-    height, width, ch = current_frame.shape
-    roi_width = width / N_ROI_COLUMNS
-    roi_first_height = height / N_ROI_ROWS
+    width, height, ch = current_frame.shape
+    roi_width = width / N_ROI_ROWS + 20
+    roi_first_height = height / N_ROI_COLUMNS
     roi_second_height = roi_first_height * 2
 
 
@@ -82,3 +81,8 @@ def roi_second_height():
 
 def roi_width():
     return roi_width
+
+
+def is_between(minV, maxV, value):
+    # type: (int, int, int) -> bool
+    return minV <= value <= maxV
