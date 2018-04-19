@@ -81,9 +81,13 @@ class BackgroundSubtractor(object):
 
                 if self.is_darker_at(cX, cY):
                     self.fish_coordinates.append(('{0}, {1}'.format(cY, cX)))
-
                     cv2.circle(current_frame, (cX, cY), 5, (0, 255, 0), -1)
-                    cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
+                    if cv2.contourArea(c) > 3000:
+                        cv2.drawContours(current_frame, [box], 0, (255, 255, 0), 2)
+                        # if bigger than max area, do it twice (means there are at least 2 fish)
+                        self.fish_coordinates.append(('{0}, {1}'.format(cY, cX)))
+                    else:
+                        cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
 
     # convert current frame to grey scale and blur it
     def convert_to_grey_scale_and_blur(self, current_frame):

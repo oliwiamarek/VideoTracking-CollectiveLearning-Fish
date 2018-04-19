@@ -1,5 +1,4 @@
 import cv2
-import matplotlib.pyplot as plt
 from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
 from config import get_array_increments, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
 
@@ -146,6 +145,7 @@ class FishTracker(object):
             })
 
     def use_background_subtraction(self, cap):
+        self.frame_no = cap.get(1)
         current_fish_coord = self.bcg_subtraction.detect_fish(cap)
         if current_fish_coord:
             self.current_frame_fish_coord = current_fish_coord
