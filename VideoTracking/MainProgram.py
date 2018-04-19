@@ -3,36 +3,18 @@
 # 18 February 2018
 # This program enables the user to digitize fish position
 
-import tkFileDialog
-from Tkinter import Tk
-
 import cv2
 import os
 import sys
 
 from FishTracker import FishTracker
-from config import MANUAL, close_capture_window, log
+from config import MANUAL, close_capture_window, log, get_video_file
 
 '''
 ===========================================================================
 FUNCTIONS
 ===========================================================================
 '''
-
-
-# No tests
-def get_video_file():
-    # type: () -> str
-    # hides the Tk window
-    video_filepath = {}
-    root = Tk()
-    root.withdraw()
-    # ask for video file
-    while not video_filepath:
-        # restrict to only videos
-        video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
-                                                      filetypes=[("Video Files", "*.avi *.mp4")])
-    return video_filepath
 
 
 def calculate_video_duration(capture):

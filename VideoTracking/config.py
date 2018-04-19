@@ -1,4 +1,7 @@
 import argparse
+import tkFileDialog
+from Tkinter import Tk
+
 import cv2
 
 '''
@@ -86,3 +89,32 @@ def roi_width():
 def is_between(minV, maxV, value):
     # type: (int, int, int) -> bool
     return minV <= value <= maxV
+
+
+def get_video_file():
+    # type: () -> str
+    title = "Choose a video file"
+    types_title = "Video Files"
+    types_string = "*.avi *.mp4"
+    return get_filepath(title, types_title, types_string)
+
+
+def get_csv_file():
+    # type: () -> str
+    title = "Choose a csv output file"
+    types_title = "Output Files"
+    types = "*.csv"
+    return get_filepath(title, types_title, types)
+
+
+def get_filepath(title, file_types_title, file_types_str):
+    # type: (str, str, str) -> str
+    # hides the Tk window
+    video_filepath = {}
+    root = Tk()
+    root.withdraw()
+    # ask for video file
+    while not video_filepath:
+        # restrict to only videos
+        video_filepath = tkFileDialog.askopenfilename(title=title, filetypes=[(file_types_title, file_types_str)])
+    return video_filepath
