@@ -21,7 +21,7 @@ def calculate_video_duration(capture):
     global stop_frame_no
     # calculate start and stop frames (normalized between 0 and 1)
     start_frame_no = calculate_frames(capture, 1)
-    stop_frame_no = calculate_frames(capture, capture.get(7) / capture.get(5))
+    stop_frame_no = calculate_frames(capture, 20)
 
     # initialize the starting frame of the video object to start_frame_no
     capture.set(1, start_frame_no)
@@ -51,7 +51,7 @@ def track_fish(capture):
     if MANUAL:
         tracker.create_record_window()
     else:
-        tracker.create_background_model()
+        tracker.create_background_model(filePath)
     while capture.isOpened():
         if capture.get(1) >= stop_frame_no:
             log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))

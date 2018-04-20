@@ -1,6 +1,7 @@
 import cv2
 from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
-from config import get_array_increments, is_not_string, log, roi_video, roi_width, roi_second_height, roi_first_height
+from FishCoordinates import FishCoordinates
+from config import log, roi_video, roi_width, roi_second_height, roi_first_height
 
 """
 FISH TRACKER CLASS
@@ -11,35 +12,16 @@ http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d
 
 class FishTracker(object):
     def __init__(self):
-        self.current_frame_fish_coord, self.all_fish_x_coord, self.all_fish_y_coord = [], [], []
+        self.current_frame_fish_coord, self.all_fish_coord = [], []
         self.roi_fish_count, self.frame_no_list = [], []
         self.current_frame, self.previous_frame = {}, {}
         self.window_name = "Fishies"
         self.frame_no = 0
         self.bcg_subtraction = BackgroundSubtraction()
 
-    def create_background_model(self):
-        self.bcg_subtraction.create_background_model()
+    def create_background_model(self, path):
+        self.bcg_subtraction.create_background_model(path)
         log("Start Fish detection.")
-
-    # no test
-    def create_figure(self, x_axis, y_axis, title, x_label, y_label):
-        """
-        :type x_axis: List[int]
-        :type y_axis: List[int]
-        :type title: str
-        :type x_label: str
-        :type y_label: str
-        """
-        if is_not_string(title) or is_not_string(x_label) or is_not_string(y_label):
-            raise TypeError("Title or labels not strings. Wrong type.")
-        plt.figure()
-        no_fish = len(self.current_frame_fish_coord)
-        for x in xrange(no_fish):
-            plt.plot(get_array_increments(x_axis, x, no_fish + 1), get_array_increments(y_axis, x, no_fish + 1))
-        plt.title(title)
-        plt.xlabel(x_label)
-        plt.ylabel(y_label)
 
     # no test
     def create_record_window(self):
@@ -59,7 +41,8 @@ class FishTracker(object):
         if event == cv2.EVENT_LBUTTONDOWN:
             self.previous_frame = self.current_frame.copy()
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.current_frame_fish_coord.append('{0}, {1}'.format(y, x))
+            coord = FishCoordinates(x, y)
+            self.current_frame_fish_coord.append(coord)
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.current_frame = self.previous_frame.copy()
             del self.current_frame_fish_coord[-1]
@@ -68,11 +51,9 @@ class FishTracker(object):
     def get_no_fish_for_ROI(self):
         roi = [0, 0, 0, 0, 0, 0]
         for fish in self.current_frame_fish_coord:
-            coordinates = [int(x.strip()) for x in fish.split(',')]
-            x = coordinates[0]
-            y = coordinates[1]
-            self.all_fish_x_coord.append(x)
-            self.all_fish_y_coord.append(y)
+            x = fish.getX()
+            y = fish.getY()
+            self.all_fish_coord.append(fish)
             if x < roi_width() and y < roi_first_height():
                 roi[0] += 1
             elif x < roi_width() and y < roi_second_height():
@@ -85,8 +66,7 @@ class FishTracker(object):
                 roi[4] += 1
             elif x > roi_width() and y > roi_second_height():
                 roi[5] += 1
-        self.all_fish_x_coord.append("")
-        self.all_fish_y_coord.append("")
+        self.all_fish_coord.append("")
         return roi
 
     def print_dictionary(self, output_file):
@@ -99,7 +79,6 @@ class FishTracker(object):
                     output_file.write('{0},'.format(value))
             output_file.write('\n')
 
-    # todo add possibility to redo the whole frame
     def track_fish(self, capture):
         # read next frame
         ret, frame = capture.read()
@@ -152,12 +131,6 @@ class FishTracker(object):
             self.frame_no_list.append(cap.get(1))
             self.update_fish_variables()
 
-    def visualise_coordinates(self):
-        self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',
-                           'x-coordinate (pixel)')
-        # Block=true prevents the graphs from closing immediately
-        plt.show(block=True)
-
     def write_to_output_file(self, filename):
         """
         Write digitized coordinates into an output file
@@ -166,12 +139,15 @@ class FishTracker(object):
         output_filename = 'Outputs\\output_{0}.csv'.format(filename)
         try:
             with open(output_filename, 'w') as output_file:
-                if len(self.all_fish_y_coord) != len(self.all_fish_x_coord):
+                if len(self.all_fish_coord) == len(self.current_frame_fish_coord):
                     raise Exception('Something went wrong with writing down the coordinates, '
-                                    'amount of y and x coordinates is not the same')
-                for fish_no in range(len(self.all_fish_x_coord)):
-                    output_file.write('{0}, {1} \n'
-                                      .format(self.all_fish_x_coord[fish_no], self.all_fish_y_coord[fish_no]))
+                                    'only wrote down coordinates from one frame')
+                for fish_no in range(len(self.all_fish_coord)):
+                    coord = self.all_fish_coord[fish_no]
+                    if type(coord) is str:  # if it is a fish coordinates separator (empty string), print it
+                        output_file.write('{0} \n'.format(coord))
+                    else:
+                        output_file.write('{0}, {1} \n'.format(coord.getX(), coord.getY()))
 
             output_file.close()
             print("Wrote the outputs")

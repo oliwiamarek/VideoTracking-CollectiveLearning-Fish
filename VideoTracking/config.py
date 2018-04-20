@@ -11,7 +11,6 @@ GLOBAL VARIABLES
 '''
 
 MANUAL = False  # Flag to use the manual or automated version of code
-VIDEO_SOURCE = "ExampleVid/trial2.mp4"  # path to video
 DEBUG = True  # used to print debug logs
 WAITING_FRAMES = 800  # default number of frames used to calculate bcgr model
 MIN_AREA_SIZE = 500  # default minimum area size for contours

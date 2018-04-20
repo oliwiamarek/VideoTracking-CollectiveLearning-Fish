@@ -8,7 +8,8 @@ import cv2
 
 # ===============================================
 # import global variables
-from config import VIDEO_SOURCE, create_window, log, construct_argument_parser, close_capture_window, roi_video, \
+from FishCoordinates import FishCoordinates
+from config import create_window, log, construct_argument_parser, close_capture_window, roi_video, \
     is_between
 
 
@@ -24,11 +25,11 @@ class BackgroundSubtractor(object):
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
 
     # TODO refactor because it's gross
-    def create_background_model(self):
+    def create_background_model(self, video_filename):
         no_waiting_frames = self.args["waiting_frames"]
         bcgr_model = {}
         # start video file/webcam stream
-        camera = cv2.VideoCapture(VIDEO_SOURCE)
+        camera = cv2.VideoCapture(video_filename)
         print("Calculating the background model. Please wait {0} seconds".format(no_waiting_frames / camera.get(5)))
         ret, frame = camera.read()
         moving_average = np.float32(frame)
@@ -69,7 +70,7 @@ class BackgroundSubtractor(object):
         # loop over the contours
         for c in contours:
             # if the contour is too small, ignore it
-            if cv2.contourArea(c) > self.args["min_area"]:
+            if is_between(self.args["min_area"], 5000, cv2.contourArea(c)):
                 # compute the bounding box for the contour, draw it on the frame
                 rect = cv2.minAreaRect(c)
                 box = cv2.boxPoints(rect)
@@ -80,12 +81,13 @@ class BackgroundSubtractor(object):
                 cY = int(M["m01"] / M["m00"])
 
                 if self.is_darker_at(cX, cY):
-                    self.fish_coordinates.append(('{0}, {1}'.format(cY, cX)))
+                    coord = FishCoordinates(cX, cY)
+                    self.fish_coordinates.append(coord)
                     cv2.circle(current_frame, (cX, cY), 5, (0, 255, 0), -1)
                     if cv2.contourArea(c) > 3000:
                         cv2.drawContours(current_frame, [box], 0, (255, 255, 0), 2)
                         # if bigger than max area, do it twice (means there are at least 2 fish)
-                        self.fish_coordinates.append(('{0}, {1}'.format(cY, cX)))
+                        self.fish_coordinates.append(coord)
                     else:
                         cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
 
@@ -133,7 +135,7 @@ class BackgroundSubtractor(object):
         elif is_between(150, 1200, xCoord) and is_between(100, 650, yCoord):
             return (background_brightness - frame_brightness) > -10
         else:
-            return True
+            return (background_brightness - frame_brightness) > -10
 
     def get_brightness_of(self, frame, xCoord, yCoord):
         # type: (object, int, int) -> int
@@ -145,9 +147,10 @@ class BackgroundSubtractor(object):
 
 if __name__ == "__main__":
     bcgr = BackgroundSubtractor()
-    bcgr.create_background_model()
+    video_source = "ExampleVid/trial2.mp4"
+    bcgr.create_background_model(video_source)
     # start video file/webcam stream
-    cam = cv2.VideoCapture(VIDEO_SOURCE)
+    cam = cv2.VideoCapture(video_source)
 
     while 1:
         bcgr.detect_fish(cam)
