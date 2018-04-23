@@ -64,7 +64,8 @@ class BackgroundSubtractor(object):
             if self.fish_coordinates:
                 return self.fish_coordinates
             # if no fish found, raise an exception
-            raise Exception("Error, fish coordinates list is empty.")
+            # raise Exception("Error, fish coordinates list is empty.")
+            return []
 
     def draw_points(self, contours, current_frame):
         # loop over the contours
@@ -117,10 +118,9 @@ class BackgroundSubtractor(object):
 
         self.draw_points(contours, current_frame)
 
-        # self.frame_no_list.append(capture.get(1))
-        # self.update_fish_variables()
-
-        log("Coord: {0}".format(self.fish_coordinates))
+        log("Coord(x then y):")
+        log([coord.x for coord in self.fish_coordinates])
+        log([coord.y for coord in self.fish_coordinates])
 
         create_window("Frame", current_frame)
         create_window("Foreground", threshold)

@@ -1,25 +1,44 @@
 import matplotlib.pyplot as plt
 import csv
+import numpy as np
 
 from config import get_csv_file, get_array_increments, is_not_string
+
+read_rows = []
+read_rows_manual = []
 
 
 def get_data_from(fileName):
     # type: (str) -> []
-    read_rows = []
+    number_of_fish = [0]
     # reading csv file
     with open(fileName, 'r') as csv_file:
         # creating a csv reader object
         csv_reader = csv.reader(csv_file)
 
+        i = 0
         # extracting each data row one by one
         for row in csv_reader:
+            if row[0] == ' ':
+                i += 1
+                number_of_fish.append(0)
+            else:
+                number_of_fish[i] += 1
             read_rows.append(row)
 
         # get total number of rows
-        print("Total no. of rows: %d" % csv_reader.line_num)
+        # print("Total no. of rows: %d" % csv_reader.line_num)
 
-        return read_rows
+        return number_of_fish
+
+
+def get_accuracy_from(manual_list, trial_list):
+    i = 0
+    accuracy_list = []
+    while i < len(manual_list):
+        accuracy_list.append(abs(manual_list[i] - trial_list[i]))
+        i += 1
+    return accuracy_list
 
 
 # x-coordinates of left sides of bars
@@ -28,12 +47,21 @@ left = [1, 2, 3, 4, 5]
 # heights of bars
 height = [10, 24, 36, 40, 5]
 
-filename = get_csv_file()
+manual = get_data_from(get_csv_file())
+trial = get_data_from(get_csv_file())
 
-rows = get_data_from(filename)
+accuracy_list = get_accuracy_from(manual, trial)
+
+average_accuracy = sum(accuracy_list) / len(accuracy_list)
 
 # labels for bars
 tick_label = ['one', 'two', 'three', 'four', 'five']
+
+blah = len(accuracy_list) % 10
+if blah > 0:
+    del accuracy_list[-blah:]
+lista = np.array(accuracy_list)
+newList = np.mean(lista.reshape(-1, 3), axis=1)
 
 # plotting a bar chart
 plt.bar(left, height, tick_label=tick_label,

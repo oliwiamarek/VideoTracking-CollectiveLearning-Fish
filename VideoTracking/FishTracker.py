@@ -5,8 +5,6 @@ from config import log, roi_video, roi_width, roi_second_height, roi_first_heigh
 
 """
 FISH TRACKER CLASS
-https://introlab.github.io/find-object/s
-http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html#matcher
 """
 
 
@@ -87,7 +85,7 @@ class FishTracker(object):
         # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         # possibly move to outside the loop
-        roi_video()
+        roi_video(frame)
 
         if ret:  # check if the frame has been read properly
             fr_len = len(self.frame_no_list)
