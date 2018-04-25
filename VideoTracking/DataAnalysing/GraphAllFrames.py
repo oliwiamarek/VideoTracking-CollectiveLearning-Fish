@@ -16,7 +16,7 @@ def get_data_from(fileName):
         i = 0
         # extracting each data row one by one
         for row in csv_reader:
-            if '6' in row[0]:
+            if '3' in row[0]:
                 number_of_fish_in_6_roi[i] += int(row[1])
             else:
                 i += 1
@@ -37,7 +37,7 @@ trial_seconds = np.max(trial_numpy.reshape(-1, 200), axis=1)
 plt.figure(1)
 
 plt.plot(trial_seconds, 'r')
-plt.axis([0, 150, 0, 20])
+plt.axis([0, 180, 0, 18])
 # plt.title('manual')
 
 plt.show()
