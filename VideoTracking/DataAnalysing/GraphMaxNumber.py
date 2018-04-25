@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 plt.figure(1)
 
 # plot the maximum number with week number.
-plt.plot([1, 2, 3, 4, 5], [8, 11, 12, 16, 17], 'r^', [1, 2, 3, 4, 5], [8, 11, 12, 16, 17], 'r',
-         [1, 2, 3, 4, 5], [11, 12, 15, 13, 15], 'bs', [1, 2, 3, 4, 5], [11, 12, 15, 13, 15], 'b')
+line1, = plt.plot([1, 2, 3, 4, 5], [8, 11, 12, 16, 17], 'r^', label='first week')
+plt.plot([1, 2, 3, 4, 5], [8, 11, 12, 16, 17], 'r')
+line2, = plt.plot([1, 2, 3, 4, 5], [11, 12, 15, 13, 15], 'bs', label='second week')
+plt.plot([1, 2, 3, 4, 5], [11, 12, 15, 13, 15], 'b')
+legend = plt.legend(handles=[line1, line2], loc=1)
 plt.axis([0, 6, 6, 18])
 plt.title("Maximum number of fish around food ring between buzzer and food dropping")
 plt.ylabel("Number of fish")
