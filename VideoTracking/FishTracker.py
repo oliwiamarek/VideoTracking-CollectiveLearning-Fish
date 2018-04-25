@@ -52,17 +52,17 @@ class FishTracker(object):
             x = fish.getX()
             y = fish.getY()
             self.all_fish_coord.append(fish)
-            if x < roi_width() and y < roi_first_height():
+            if y < roi_width() and x < roi_first_height():
                 roi[0] += 1
-            elif x < roi_width() and y < roi_second_height():
+            elif y < roi_width() and x < roi_second_height():
                 roi[1] += 1
-            elif x < roi_width() and y > roi_second_height():
+            elif y < roi_width() and x > roi_second_height():
                 roi[2] += 1
-            elif x > roi_width() and y < roi_first_height():
+            elif y > roi_width() and x < roi_first_height():
                 roi[3] += 1
-            elif x > roi_width() and y < roi_second_height():
+            elif y > roi_width() and x < roi_second_height():
                 roi[4] += 1
-            elif x > roi_width() and y > roi_second_height():
+            elif y > roi_width() and x > roi_second_height():
                 roi[5] += 1
         self.all_fish_coord.append("")
         return roi
