@@ -44,8 +44,8 @@ def print_dictionary(output_file):
 def get_no_fish_for_ROI(current_frame_fish_coord):
     roi = [0, 0, 0, 0, 0, 0]
     for fish in current_frame_fish_coord:
-        x = fish[0]
-        y = fish[1]
+        x = int(fish[0])
+        y = int(fish[1])
         all_fish_coord.append(fish)
         if y < 380 and x < 428:
             roi[0] += 1
@@ -65,9 +65,9 @@ def get_no_fish_for_ROI(current_frame_fish_coord):
 
 get_data_from(get_csv_file())
 
-output_filename = 'Outputs\\fish_no_output_{0}.csv'.format("whatever")
+output_filename = '..\\Outputs\\all\\fish_no_output_{0}.csv'.format("MANUAL")
 
-with open('Outputs\\fish_no_output_{0}.csv'.format("whatever"), 'w') as output_file:
+with open(output_filename, 'w') as output_file:
     print_dictionary(output_file)
 output_file.close()
 print("Wrote no fish to file")

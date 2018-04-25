@@ -117,8 +117,7 @@ class FishTracker(object):
         for r in range(len(roi)):
             self.roi_fish_count.append({
                 'roi': r + 1,
-                'no_fish': roi[r],
-                'frame': self.frame_no
+                'no_fish': roi[r]
             })
 
     def use_background_subtraction(self, cap):

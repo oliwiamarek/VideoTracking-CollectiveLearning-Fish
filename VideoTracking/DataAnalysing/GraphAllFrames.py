@@ -17,7 +17,7 @@ def get_data_from(fileName):
         # extracting each data row one by one
         for row in csv_reader:
             if '6' in row[0]:
-                number_of_fish_in_6_roi[i] += int(row[2])
+                number_of_fish_in_6_roi[i] += int(row[1])
             else:
                 i += 1
                 number_of_fish_in_6_roi.append(0)
@@ -26,12 +26,19 @@ def get_data_from(fileName):
 
 trial = get_data_from(get_csv_file())
 
+blah = len(trial) % 200
+if blah > 0:
+    del trial[-blah:]
+
+trial_numpy = np.array(trial)
+trial_seconds = np.max(trial_numpy.reshape(-1, 200), axis=1)
+
 # plot with various axes scales
 plt.figure(1)
 
-plt.plot(trial, 'r')
-plt.axis([0, 7000, 0, 24])
-plt.title('manual')
+plt.plot(trial_seconds, 'r')
+plt.axis([0, 150, 0, 20])
+# plt.title('manual')
 
 plt.show()
 
