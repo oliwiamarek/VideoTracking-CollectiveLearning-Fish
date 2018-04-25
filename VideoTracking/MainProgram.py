@@ -37,6 +37,7 @@ def print_frame_rate(capture):
         raise
 
 
+# this function returns a filename from a filepath passed in as a parameter
 def get_name_from_path(path):
     try:
         return os.path.splitext(os.path.basename(path))[0]
@@ -45,24 +46,29 @@ def get_name_from_path(path):
         raise
 
 
+# this function performs background subtraction or manual tracking depending on flags specified
 def track_fish(capture):
     times = 0
     print("Start Fish detection.")
+    # is manual flag set to true, create record window for manual tracking
     if MANUAL:
         tracker.create_record_window()
+    # if manual flag set to false, create background model
     else:
         tracker.create_background_model(filePath)
     while capture.isOpened():
         if capture.get(1) >= stop_frame_no:
             log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))
             break
+
         times += 1
         log("TIMES: {0}".format(times))
         # reset mouse coordinates
         del tracker.current_frame_fish_coord[:]
-        if MANUAL:
+
+        if MANUAL:  # if manual flag set to false, perform manual tracking
             tracker.track_fish(capture)
-        else:
+        else:  # if manual flag set to false, perform background subtraction
             tracker.use_background_subtraction(capture)
         # if the `q` key is pressed, break from the loop
         key = cv2.waitKey(1) & 0xFF
@@ -88,14 +94,14 @@ MAIN FUNCTION
 if __name__ == "__main__":
     try:
         tracker = FishTracker()
-        filePath = get_video_file()
-        filename = get_name_from_path(filePath)
+        filePath = get_video_file()  # asks user to select a video file
+        filename = get_name_from_path(filePath)  # get name from filepath
         cap = cv2.VideoCapture(filePath)
 
         print_frame_rate(cap)
         calculate_video_duration(cap)
         track_fish(cap)
-        close_capture_window(cap)
+        close_capture_window(cap)  # finish tracking
         log("Tracking process finished.")
 
         tracker.write_to_output_file(filename)

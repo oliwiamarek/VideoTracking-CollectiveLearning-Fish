@@ -1,5 +1,6 @@
 #
 # This file contains the Fish Tracker class. This class is used for manual tracking and counting of the fish.
+# It also has functions for writing to the output files.
 
 import cv2
 from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
