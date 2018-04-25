@@ -1,8 +1,14 @@
+#
+# This file contains all of the global variables and the functions that are being used in multiple files in the project.
+#
+
+
 import argparse
 import tkFileDialog
 from Tkinter import Tk
 
 import cv2
+
 
 '''
 ===========================================================================

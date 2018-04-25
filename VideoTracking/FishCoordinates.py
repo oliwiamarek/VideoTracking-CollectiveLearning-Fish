@@ -1,3 +1,10 @@
+"""
+===========================================================================
+FISH COORDINATES CLASS
+===========================================================================
+"""
+
+
 class FishCoordinates(object):
     def __init__(self, x, y):
         self.x = x
@@ -11,4 +18,3 @@ class FishCoordinates(object):
     def getY(self):
         # Getter method for a Coordinate object's y coordinate
         return self.y
-

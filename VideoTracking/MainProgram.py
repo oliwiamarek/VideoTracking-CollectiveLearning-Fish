@@ -1,7 +1,8 @@
-# coding=utf-8
-# Oliwia Marek
-# 18 February 2018
-# This program enables the user to digitize fish position
+# Oliwia Marek (okm@aber.ac.uk)
+# 25 April 2018
+# This program enables the user to digitize fish position and count the number of fish in different regions of interest.
+#
+# This file contains the main function of the program.
 
 import cv2
 import os
@@ -29,8 +30,8 @@ def calculate_video_duration(capture):
 
 def print_frame_rate(capture):
     try:
-        print('frame rate per second = ' + '%.2f' % capture.get(5))
-        print('number of frames = ' + '%.2f' % capture.get(7))
+        print("frame rate per second = " + "%.2f" % capture.get(5))
+        print("number of frames = " + "%.2f" % capture.get(7))
     except TypeError:
         print("Capture.get returned type different to float")
         raise
@@ -44,7 +45,6 @@ def get_name_from_path(path):
         raise
 
 
-# todo tests
 def track_fish(capture):
     times = 0
     print("Start Fish detection.")
@@ -65,9 +65,6 @@ def track_fish(capture):
         else:
             tracker.use_background_subtraction(capture)
         # if the `q` key is pressed, break from the loop
-        # Turns out I needed to let OpenCV start handling events. The cv::waitKey(n) function in OpenCV is used to
-        # introduce a delay of n milliseconds while rendering images to windows
-        # https://codeyarns.com/2015/01/20/how-to-use-opencv-waitkey-in-python/
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             log("Pressed 'q' to exit.")
@@ -103,7 +100,6 @@ if __name__ == "__main__":
 
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
-        # tracker.visualise_coordinates()
     except:
         print ("Unexpected error:", sys.exc_info()[0])
         raise

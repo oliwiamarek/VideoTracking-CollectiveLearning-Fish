@@ -13,7 +13,11 @@ from config import create_window, log, construct_argument_parser, close_capture_
     is_between
 
 
-# ===============================================
+"""
+===========================================================================
+BACKGROUND SUBTRACTOR CLASS
+===========================================================================
+"""
 
 
 class BackgroundSubtractor(object):
@@ -141,24 +145,3 @@ class BackgroundSubtractor(object):
         # type: (object, int, int) -> int
         R, G, B = frame[yCoord, xCoord]
         return (R + G + B) / 3
-
-
-# =====================================================================================================================
-
-if __name__ == "__main__":
-    bcgr = BackgroundSubtractor()
-    video_source = "ExampleVid/trial2.mp4"
-    bcgr.create_background_model(video_source)
-    # start video file/webcam stream
-    cam = cv2.VideoCapture(video_source)
-
-    while 1:
-        bcgr.detect_fish(cam)
-
-        # if the `q` key is pressed, break from the lop
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord("q"):
-            log("Pressed 'q' to exit.")
-            break
-    close_capture_window(cam)
-    log("Process finished.")
