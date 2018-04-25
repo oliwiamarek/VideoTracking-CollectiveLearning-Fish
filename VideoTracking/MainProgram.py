@@ -1,17 +1,80 @@
-# coding=utf-8
-# Oliwia Marek
-# 18 February 2018
-# This program enables the user to digitize fish position
+# Oliwia Marek (okm@aber.ac.uk)
+# 25 April 2018
+# This program enables the user to digitize fish position and count the number of fish in different regions of interest.
+#
+# This file contains the main function of the program.
 
 import cv2
 import os
 import sys
-import FishTracker
+
+from FishTracker import FishTracker
+from config import MANUAL, close_capture_window, log, get_video_file
 
 '''
-GLOBAL FUNCTIONS 
+===========================================================================
+FUNCTIONS
+===========================================================================
 '''
-stop_frame_no = 0
+
+
+def calculate_video_duration(capture):
+    global stop_frame_no
+    # calculate start and stop frames (normalized between 0 and 1)
+    start_frame_no = calculate_frames(capture, 1)
+    stop_frame_no = calculate_frames(capture, capture.get(7) / capture.get(5))
+
+    # initialize the starting frame of the video object to start_frame_no
+    capture.set(1, start_frame_no)
+
+
+def print_frame_rate(capture):
+    try:
+        print("frame rate per second = " + "%.2f" % capture.get(5))
+        print("number of frames = " + "%.2f" % capture.get(7))
+    except TypeError:
+        print("Capture.get returned type different to float")
+        raise
+
+
+# this function returns a filename from a filepath passed in as a parameter
+def get_name_from_path(path):
+    try:
+        return os.path.splitext(os.path.basename(path))[0]
+    except TypeError:
+        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(path))
+        raise
+
+
+# this function performs background subtraction or manual tracking depending on flags specified
+def track_fish(capture):
+    times = 0
+    print("Start Fish detection.")
+    # is manual flag set to true, create record window for manual tracking
+    if MANUAL:
+        tracker.create_record_window()
+    # if manual flag set to false, create background model
+    else:
+        tracker.create_background_model(filePath)
+    while capture.isOpened():
+        if capture.get(1) >= stop_frame_no:
+            log("Frame number ({0}) bigger than stop frame no ({1})".format(capture.get(1), stop_frame_no))
+            break
+
+        times += 1
+        log("TIMES: {0}".format(times))
+        # reset mouse coordinates
+        del tracker.current_frame_fish_coord[:]
+
+        if MANUAL:  # if manual flag set to false, perform manual tracking
+            tracker.track_fish(capture)
+        else:  # if manual flag set to false, perform background subtraction
+            tracker.use_background_subtraction(capture)
+        # if the `q` key is pressed, break from the loop
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord("q"):
+            log("Pressed 'q' to exit.")
+            break
 
 
 def calculate_frames(capture, seconds):
@@ -22,64 +85,27 @@ def calculate_frames(capture, seconds):
         raise
 
 
-def calculate_video_duration():
-    global stop_frame_no
-    # calculate start and stop frames (normalized between 0 and 1)
-    start_frame_no = calculate_frames(cap, 1)
-    stop_frame_no = calculate_frames(cap, 2)
-
-    # initialize the starting frame of the video object to start_frame_no
-    cap.set(1, start_frame_no)
-
-
-def print_frame_rate():
-    try:
-        print('frame rate per second = ' + '%.2f' % cap.get(5))
-        print('number of frames = ' + '%.2f' % cap.get(7))
-    except TypeError:
-        print("Capture.get returned type different to int")
-        raise
-
-
-# TODO move to Fish tracer and make the filepath private
-def get_name_from_path():
-    try:
-        return os.path.splitext(os.path.basename(tracker.video_filepath))[0]
-    except TypeError:
-        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(tracker.video_filepath))
-        raise
-
-
 '''
+===========================================================================
 MAIN FUNCTION
+===========================================================================
 '''
 
 if __name__ == "__main__":
     try:
-        tracker = FishTracker.FishTracker()
+        tracker = FishTracker()
+        filePath = get_video_file()  # asks user to select a video file
+        filename = get_name_from_path(filePath)  # get name from filepath
+        cap = cv2.VideoCapture(filePath)
 
-        tracker.get_video_file()
-        filename = get_name_from_path()
-
-        cap = cv2.VideoCapture(tracker.video_filepath)
-
-        print_frame_rate()
-
-        calculate_video_duration()
-        tracker.create_record_window()
-
-        while cap.isOpened():
-            # reset mouse coordinates
-            del tracker.current_frame_fish_coord[:]
-            tracker.track_fish(cap)
-            if cap.get(1) > stop_frame_no:
-                break
-
-        tracker.close_capture_window(cap)
+        print_frame_rate(cap)
+        calculate_video_duration(cap)
+        track_fish(cap)
+        close_capture_window(cap)  # finish tracking
+        log("Tracking process finished.")
 
         tracker.write_to_output_file(filename)
         tracker.write_no_fish_to_file(filename)
-        tracker.visualise_coordinates()
     except:
         print ("Unexpected error:", sys.exc_info()[0])
         raise

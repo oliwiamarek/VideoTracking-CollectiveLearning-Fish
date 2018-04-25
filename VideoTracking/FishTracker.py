@@ -1,57 +1,32 @@
+#
+# This file contains the Fish Tracker class. This class is used for manual tracking and counting of the fish.
+# It also has functions for writing to the output files.
+
 import cv2
-import matplotlib.pyplot as plt
-import tkFileDialog
-from Tkinter import Tk
+from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
+from FishCoordinates import FishCoordinates
+from config import log, roi_video, roi_width, roi_second_height, roi_first_height
 
 """
+===========================================================================
 FISH TRACKER CLASS
-https://introlab.github.io/find-object/s
-http://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_feature2d/py_matcher/py_matcher.html#matcher
+===========================================================================
 """
-n_rows = 2
-n_columns = 3
-
-
-def return_array(array, start, element_no):
-    return array[start::element_no]
 
 
 class FishTracker(object):
     def __init__(self):
-        # mouse_x_list, mouse_y_list - lists to hold x and y coordinates of points that user clicked in current frame
-        # fish_x, fish_y - lists to hold coordinates of all fish in all frames
-        # TODO delete: fish_number_list
-        self.current_frame_fish_coord, self.all_fish_x_coord, self.all_fish_y_coord = [], [], []
-        self.roi_fish_count, self.frame_no_list = [], []
-        self.current_frame, self.previous_frame = {}, {}
-        self.video_filepath = ""
-        self.window_name = "Fishies"
-        self.frame_no = 0
-        self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0
+        self.current_frame_fish_coord, self.all_fish_coord = [], []  # current and overall list of fish coordinates
+        self.roi_fish_count = []  # count of fish in each of the ROI in every frame
+        self.frame_no_list = []  # list of the frame numbers to be used in the output file creation
+        self.current_frame, self.previous_frame = {}, {}  # variables to store current and previous frame
+        self.window_name = "Fishies"  # name of the main window for Manual Tracking
+        self.frame_no = 0  # current frame number
+        self.bcg_subtractor = BackgroundSubtraction()  # Background Subtractor object
 
-    @staticmethod
-    def close_capture_window(capture):
-        capture.release()
-        cv2.destroyAllWindows()
-
-    def create_figure(self, x_axis, y_axis, title, x_label, y_label):
-        """
-        :type x_axis: List[int]
-        :type y_axis: List[int]
-        :type title: str
-        :type x_label: str
-        :type y_label: str
-        """
-        if self.is_not_string(title) or self.is_not_string(x_label) or self.is_not_string(y_label):
-            raise TypeError("Title or labels not strings. Wrong type.")
-        plt.figure()
-        no_fish = len(self.current_frame_fish_coord)
-        for x in xrange(no_fish):
-            plt.plot(return_array(y_axis, x, no_fish + 1), return_array(x_axis, x, no_fish + 1))
-        # plt.plot(return_array(x_axis, 1, no_fish), return_array(y_axis, 1, no_fish))
-        plt.title(title)
-        plt.xlabel(x_label)
-        plt.ylabel(y_label)
+    def create_background_model(self, path):
+        self.bcg_subtractor.create_background_model(path)
+        log("Start Fish detection.")
 
     def create_record_window(self):
         self.window_name = 'Fishies'
@@ -64,135 +39,134 @@ class FishTracker(object):
                     (0, 255, 0), 2)
         cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-    # allows removing once!!
+    # function to draw the point after clicking on the fish manually. User can right click to undo once.
     def draw_point(self, event, x, y, flags, params):
+        # if left click, draw point
         if event == cv2.EVENT_LBUTTONDOWN:
             self.previous_frame = self.current_frame.copy()
             cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
-            self.current_frame_fish_coord.append('{0}, {1}'.format(x, y))
+            coord = FishCoordinates(x, y)
+            self.current_frame_fish_coord.append(coord)
+        # if right click, undo the previous click
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.current_frame = self.previous_frame.copy()
             del self.current_frame_fish_coord[-1]
 
+    # this function loops through coordinates of current frame and counts in which ROI the fish is situated
     def get_no_fish_for_ROI(self):
+        # type: () -> [int]
         roi = [0, 0, 0, 0, 0, 0]
         for fish in self.current_frame_fish_coord:
-            coordinates = [int(x.strip()) for x in fish.split(',')]
-            x = coordinates[0]
-            y = coordinates[1]
-            self.all_fish_x_coord.append(x)
-            self.all_fish_y_coord.append(y)
-            if y < self.roi_mid_width and x < self.roi_first_height:
+            x = fish.getX()
+            y = fish.getY()
+
+            # update list with all coordinates
+            self.all_fish_coord.append(fish)
+
+            # 1st ROI in upper left corner, 6th ROI in bottom right corner
+            if y < roi_width() and x < roi_first_height():
                 roi[0] += 1
-            elif y < self.roi_mid_width and x < self.roi_second_height:
+            elif y < roi_width() and x < roi_second_height():
                 roi[1] += 1
-            elif y < self.roi_mid_width and x > self.roi_second_height:
+            elif y < roi_width() and x > roi_second_height():
                 roi[2] += 1
-            elif y > self.roi_mid_width and x < self.roi_first_height:
+            elif y > roi_width() and x < roi_first_height():
                 roi[3] += 1
-            elif y > self.roi_mid_width and x < self.roi_second_height:
+            elif y > roi_width() and x < roi_second_height():
                 roi[4] += 1
-            elif y > self.roi_mid_width and x > self.roi_second_height:
+            elif y > roi_width() and x > roi_second_height():
                 roi[5] += 1
-        self.all_fish_x_coord.append("")
-        self.all_fish_y_coord.append("")
+
+        # add empty row after each frame
+        self.all_fish_coord.append("")
         return roi
 
-    def get_video_file(self):
-        # hides the Tk window
-        root = Tk()
-        root.withdraw()
-        # ask for video file
-        while not self.video_filepath:
-            # restrict to only videos
-            self.video_filepath = tkFileDialog.askopenfilename(title="Choose a video file",
-                                                               filetypes=[("Video Files", "*.avi *.mp4")])
-
-    @staticmethod
-    def is_not_string(string):
-        # type: (str) -> bool
-        return type(string) is not str
-
+    # this function is printing the dictionary recursively into a file passed in.
     def print_dictionary(self, output_file):
         for f in self.roi_fish_count:
             for key, value in f.items():
-                # is recursive
+                # check if recursive
                 if hasattr(value, '__iter__'):
                     self.print_dictionary(value)
                 else:
                     output_file.write('{0},'.format(value))
             output_file.write('\n')
 
-    def roi_video(self):
-        height, width, ch = self.current_frame.shape
-        roi_height = height / n_rows
-        roi_width = width / n_columns
-
-        self.roi_mid_width = roi_width
-        self.roi_first_height = roi_height
-        self.roi_second_height = roi_height * 2
-
-        images = []
-        for row in range(0, n_rows):
-            for column in range(0, n_columns):
-                row_height = row * roi_height
-                column_width = column * roi_width
-                tmp_image = self.current_frame[
-                            row_height: (row + 1) * roi_height,
-                            column_width:(column + 1) * roi_width
-                            ]
-                images.append(tmp_image)
-
-    # todo add possibility to redo the whole frame
     def track_fish(self, capture):
         # read next frame
         ret, frame = capture.read()
         self.current_frame = frame
         self.previous_frame = self.current_frame.copy()
-        # cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        self.roi_video()
+        roi_video(frame)
 
-        if ret:  # check if the frame has been read properly
+        # only continue if the frame has been read properly
+        if ret:
             fr_len = len(self.frame_no_list)
-
             self.display_frame_text(self.current_frame, capture)
-            # clicking at fish adds a circular point - has to be outside the while loop
+
+            # clicking at fish adds a circular point
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
             while fr_len == len(self.frame_no_list):
                 cv2.imshow(self.window_name, self.current_frame)
                 self.track_fish_through_frames(capture)
 
+    # function to update fish lists once key 'n' is pressed to go to the next frame
     def track_fish_through_frames(self, capture):
         # press n to get to next frame
         if cv2.waitKey(1) % 0xFF == ord('n'):
             #  check if mouse clicked
             if 0 < len(self.current_frame_fish_coord):
                 self.frame_no_list.append(capture.get(1))
-                self.update_fish_variables()
+                self.update_roi_fish_count()
+            # if mouse not clicked, do not continue
             else:
-                # display the frame number
                 cv2.putText(self.current_frame, 'Please first click on a point', (830, 130),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-    def update_fish_variables(self):
+    def update_roi_fish_count(self):
         roi = self.get_no_fish_for_ROI()
 
         for r in range(len(roi)):
             self.roi_fish_count.append({
                 'roi': r + 1,
-                'no_fish': roi[r],
-                'frame': self.frame_no
+                'no_fish': roi[r]
             })
 
-    # TODO FIX
-    def visualise_coordinates(self):
-        self.create_figure(self.all_fish_x_coord, self.all_fish_y_coord, 'X and Y Coordinates', 'y-coordinate (pixel)',
-                           'x-coordinate (pixel)')
-        # Block=true prevents the graphs from closing immediately
-        plt.show(block=True)
+    # use background subtraction instead of manual tracking and update variables
+    def use_background_subtraction(self, cap):
+        self.frame_no = cap.get(1)
+        current_fish_coord = self.bcg_subtractor.detect_fish(cap)
+        if current_fish_coord:
+            self.current_frame_fish_coord = current_fish_coord
+            self.frame_no_list.append(cap.get(1))
+            self.update_roi_fish_count()
 
+    # write fish coordinates into a file with the same name is video
+    def write_to_output_file(self, filename):
+        output_filename = 'Outputs\\output_{0}.csv'.format(filename)
+        try:
+            with open(output_filename, 'w') as output_file:
+                # check if more than one frame was read
+                if len(self.all_fish_coord) == len(self.current_frame_fish_coord):
+                    raise Exception('Something went wrong with writing down the coordinates, '
+                                    'only wrote down coordinates from one frame')
+                # loop through all coordinates and output into a file
+                for fish_no in range(len(self.all_fish_coord)):
+                    coord = self.all_fish_coord[fish_no]
+                    if type(coord) is str:  # if it is a fish coordinates separator (empty string), print it
+                        output_file.write('{0} \n'.format(coord))
+                    else:
+                        output_file.write('{0}, {1} \n'.format(coord.getX(), coord.getY()))
+            output_file.close()
+            print("Wrote the outputs")
+        except IOError as e:
+            print("Unable to write to a file {0}. Writing to a new file. ({1})".format(output_filename, e))
+            # if file was readonly or unable to write to, retry with added string at the end of the filename
+            self.write_to_output_file(filename + '-RETRY')
+
+    # write the information about ROI into a file
     def write_no_fish_to_file(self, filename):
         output_filename = 'Outputs\\fish_no_output_{0}.csv'.format(filename)
         try:
@@ -203,26 +177,5 @@ class FishTracker(object):
         except IOError as e:
             print("Unable to write to a file '{0}'. Writing to a new file '{1}-RETRY'. ({2})"
                   .format(output_filename, filename, e))
-            self.write_to_output_file(filename + '-RETRY')
-
-    def write_to_output_file(self, filename):
-        """
-        Write digitized coordinates into an output file
-        :type filename: str
-        """
-        output_filename = 'Outputs\\output_{0}.csv'.format(filename)
-        try:
-            with open(output_filename, 'w') as output_file:
-                if len(self.all_fish_y_coord) != len(self.all_fish_x_coord):
-                    raise Exception('Something went wrong with writing down the coordinates, '
-                                    'amount of y and x coordinates is not the same')
-                for fish_no in range(len(self.all_fish_x_coord)):
-                    output_file.write('{0}, {1} \n'
-                                      .format(self.all_fish_x_coord[fish_no], self.all_fish_y_coord[fish_no]))
-
-            output_file.close()
-            print("Wrote the outputs")
-        except IOError as e:
-            print("Unable to write to a file {0}. Writing to a new file. ({1})"
-                  .format(output_filename, e))
+            # if file was readonly or unable to write to, retry with added string at the end of the filename
             self.write_to_output_file(filename + '-RETRY')
