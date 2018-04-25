@@ -50,7 +50,6 @@ def close_capture_window(capture):
 
 
 # construct the argument parser and parse the arguments
-# look https://www.pyimagesearch.com/2015/05/25/basic-motion-detection-and-tracking-with-python-and-opencv/
 def construct_argument_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("-a", "--min-area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
@@ -61,6 +60,7 @@ def construct_argument_parser():
     return vars(ap.parse_args())
 
 
+# returns every nth element of the passed array, starting at 'start'
 def get_array_increments(array, start, element_no):
     # type: (list, int, int) -> list
     return array[start::element_no]
@@ -71,8 +71,11 @@ def is_not_string(string):
     return type(string) is not str
 
 
+# divide width and height of the video to get boundaries of the ROI
 def roi_video(current_frame):
     global roi_first_height, roi_second_height, roi_width
+
+    # get width and height of the video
     width, height, ch = current_frame.shape
     roi_width = width / N_ROI_ROWS + 20
     roi_first_height = height / N_ROI_COLUMNS
@@ -91,11 +94,13 @@ def roi_width():
     return roi_width
 
 
+# check if value is between min and max passed in
 def is_between(minV, maxV, value):
     # type: (int, int, int) -> bool
     return minV <= value <= maxV
 
 
+# ask user to select video file. only allow avi and mp4 extensions
 def get_video_file():
     # type: () -> str
     title = "Choose a video file"
@@ -104,6 +109,7 @@ def get_video_file():
     return get_filepath(title, types_title, types_string)
 
 
+# ask user for the csv file, used for creation of graphs
 def get_csv_file():
     # type: () -> str
     title = "Choose a csv output file"
@@ -112,6 +118,7 @@ def get_csv_file():
     return get_filepath(title, types_title, types)
 
 
+# ask user for a file, allows only specified file types
 def get_filepath(title, file_types_title, file_types_str):
     # type: (str, str, str) -> str
     # hides the Tk window
