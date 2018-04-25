@@ -1,12 +1,9 @@
-import matplotlib.pyplot as plt
+#
+# This program creates a graph of maximum number of fish in the region of  interest where the food ring was in each
+# of the weeks in first and second experiment.
+#
 
-"""
-===========================================================================
-This program creates a graph of maximum number of fish in the region of 
-interest where the food ring was in each of the weeks in first and second 
-experiment.
-===========================================================================
-"""
+import matplotlib.pyplot as plt
 
 # plot with various axes scales
 plt.figure(1)

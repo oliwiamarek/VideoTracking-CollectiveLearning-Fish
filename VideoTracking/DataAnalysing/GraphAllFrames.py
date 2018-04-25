@@ -4,7 +4,7 @@ import numpy as np
 
 from config import get_csv_file
 
-ROI_VALUE = 5
+ROI_VALUE = 5  # which Region of Interest we want to take into account
 
 '''
 ===========================================================================
@@ -12,7 +12,7 @@ FUNCTIONS
 ===========================================================================
 '''
 
-
+# read csv file
 def get_data_from(fileName, roi):
     # type: (str, int) -> []
     number_of_fish_in_6_roi = [0]
