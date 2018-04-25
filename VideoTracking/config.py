@@ -12,7 +12,7 @@ GLOBAL VARIABLES
 
 MANUAL = False  # Flag to use the manual or automated version of code
 DEBUG = True  # used to print debug logs
-WAITING_FRAMES = 100  # default number of frames used to calculate bcgr model
+WAITING_FRAMES = 900  # default number of frames used to calculate bcgr model
 MIN_AREA_SIZE = 500  # default minimum area size for contours
 THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average calculation
 N_ROI_ROWS = 2

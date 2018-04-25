@@ -21,7 +21,7 @@ def calculate_video_duration(capture):
     global stop_frame_no
     # calculate start and stop frames (normalized between 0 and 1)
     start_frame_no = calculate_frames(capture, 1)
-    stop_frame_no = calculate_frames(capture, 4)
+    stop_frame_no = calculate_frames(capture, capture.get(7) / capture.get(5))
 
     # initialize the starting frame of the video object to start_frame_no
     capture.set(1, start_frame_no)
