@@ -6,6 +6,8 @@ import FishTracker
 from mock import patch, Mock, mock
 import sys
 
+from FishCoordinates import FishCoordinates
+
 
 class TestFishTracker(unittest.TestCase):
     def setUp(self):
@@ -31,16 +33,14 @@ class TestFishTracker(unittest.TestCase):
              patch('config.roi_first_height', return_value=2), \
              patch('config.roi_second_height', return_value=4):
             self.tracker.current_frame_fish_coord = [
-                "1, 2", "3, 4", "5, 6"
+                FishCoordinates(1, 2), FishCoordinates(3, 4), FishCoordinates(5, 6)
             ]
-            expected_x = [1, 3, 5, '']
-            expected_y = [2, 4, 6, '']
             expected_roi = [0, 0, 0, 0, 0, 3]
 
             result = self.tracker.get_no_fish_for_ROI()
 
-            self.assertEqual(expected_x, self.tracker.all_fish_x_coord)
-            self.assertEqual(expected_y, self.tracker.all_fish_y_coord)
+            # 4 because it adds an empty coordinate object at the end of each frame
+            self.assertEqual(4, len(self.tracker.all_fish_coord))
             self.assertEqual(expected_roi, result)
 
 

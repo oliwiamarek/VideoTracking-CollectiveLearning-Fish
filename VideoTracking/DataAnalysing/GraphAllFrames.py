@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import csv
 import numpy as np
+import scipy.interpolate as intp
 
 from config import get_csv_file
 
-ROI_VALUE = 5  # which Region of Interest we want to take into account
+ROI_VALUE = 3  # which Region of Interest we want to take into account
 
 '''
 ===========================================================================
@@ -36,13 +37,13 @@ def squish_to_seconds_from(trial_list):
     # type: ([]) -> []
     # To make it present it better, take max from 200 frames.
     # if it is not dividable by 200, delete number of items equivalent to the modulus.
-    modulus = len(trial_list) % 200
+    modulus = len(trial_list) % 300
     if modulus > 0:
         del trial_list[-modulus:]
 
     # Able to take maximum of n items by using numpy array
     trial_numpy = np.array(trial_list)
-    return np.max(trial_numpy.reshape(-1, 200), axis=1)
+    return np.max(trial_numpy.reshape(-1, 300), axis=1)
 
 
 '''
@@ -51,6 +52,7 @@ MAIN
 ===========================================================================
 '''
 if __name__ == "__main__":
+    y = np.linspace(0, 119, 119)
     trial = get_data_from(get_csv_file(), ROI_VALUE)
 
     trial_seconds = squish_to_seconds_from(trial)
@@ -58,11 +60,11 @@ if __name__ == "__main__":
     # plot with various axes scales
     plt.figure(1)
 
-    plt.plot(trial_seconds, 'r')
-    plt.axis([0, 180, 0, 18])
+    plt.plot(y, trial_seconds, 'r')
+    plt.axis([0, 120, 0, 18])
     plt.title("Number of fish around food ring during duration of the video")
     plt.ylabel("Number of fish")
-    plt.xlabel("Time")
+    plt.xlabel("Time (s)")
 
     plt.show()
 

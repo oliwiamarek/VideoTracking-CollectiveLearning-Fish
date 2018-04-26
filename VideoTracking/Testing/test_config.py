@@ -67,9 +67,9 @@ class TestConfig(unittest.TestCase):
 
     def test_roi_video_setsValuesRight(self):
         mockFrame = type('frame', (object,), {'shape': [4, 9, 16]})()
-        expectedWidth = 3
-        expectedFirstHeight = 2
-        expectedSecondHeight = 4
+        expectedWidth = 22
+        expectedFirstHeight = 3
+        expectedSecondHeight = 6
         config.roi_video(mockFrame)
         resultWidth = config.roi_width
         resultFHight = config.roi_first_height
