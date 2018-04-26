@@ -1,11 +1,13 @@
-import unittest
+#
+# This file contains tests for the Fish Tracker class
+#
 
+import unittest
 import cv2
+import sys
+from mock import patch, Mock, mock
 
 import FishTracker
-from mock import patch, Mock, mock
-import sys
-
 from FishCoordinates import FishCoordinates
 
 
@@ -15,6 +17,7 @@ class TestFishTracker(unittest.TestCase):
         self.tracker = FishTracker.FishTracker()
 
     def test_draw_point_setsRightValues(self):
+        # mock the OpenCv function that draws a circle
         patcher = mock.patch.object(cv2, 'circle')
         patched = patcher.start()
         event_left_button_pressed = 1

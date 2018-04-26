@@ -1,3 +1,7 @@
+#
+# This file contains tests for the config file.
+#
+
 import StringIO
 import sys
 import unittest
@@ -8,6 +12,7 @@ import config
 class TestConfig(unittest.TestCase):
     def test_log_debugTrue(self):
         config.DEBUG = True
+        # mock 'print' function
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
         test = "test"
@@ -17,6 +22,7 @@ class TestConfig(unittest.TestCase):
 
     def test_log_debugFalse(self):
         config.DEBUG = False
+        # mock 'print' function
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
         test = "test"

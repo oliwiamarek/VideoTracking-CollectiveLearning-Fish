@@ -1,6 +1,9 @@
+#
+# This file contains tests for the functions in the main program file
+#
+
 import StringIO
 import unittest
-
 import sys
 
 import MainProgram as mp
@@ -11,6 +14,7 @@ class MainProgramTests(unittest.TestCase):
         self.assertRaises(TypeError, mp.print_frame_rate, MockStringCapture)
 
     def test_print_frame_rate_DoesNotRaiseErrorWithFloatValues(self):
+        # mock 'print' function
         capturedOutput = StringIO.StringIO()
         sys.stdout = capturedOutput
         mp.print_frame_rate(MockCapture())
@@ -48,6 +52,7 @@ MOCKS
 '''
 
 
+# This class mocks the capture of the 'print' function in python
 class MockStringCapture(object):
     def get(self, integer):
         return str(integer)
@@ -56,6 +61,7 @@ class MockStringCapture(object):
         print("set")
 
 
+# This class mocks the capture of the 'print' function in python
 class MockCapture(object):
     def get(self, integer):
         return float(integer)
