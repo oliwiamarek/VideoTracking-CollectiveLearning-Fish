@@ -119,7 +119,6 @@ class BackgroundSubtractor(object):
         return contours
 
     # perform background subtraction on current frame and display final effect
-    # noinspection PyTypeChecker
     def use_background_subtraction_on(self, current_frame):
         gray = self.convert_to_grey_scale_and_blur(current_frame)
 
