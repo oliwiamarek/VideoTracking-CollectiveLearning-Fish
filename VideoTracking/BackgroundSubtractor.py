@@ -1,5 +1,7 @@
 #
 # This file contains a Background Subtractor class that performs automated detection and counting of the fish.
+# It first creates a background model and then subtracts the current frame from it to detect the movement.
+# It also consists of filtering function to get rid of the noise.
 #
 
 import numpy as np
@@ -25,7 +27,7 @@ class BackgroundSubtractor(object):
         self.fish_coordinates = []  # lists of fish coordinates of current frame
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0  # boundaries of ROI
 
-    # TODO refactor because it's gross
+    # This function takes a filename as a string and calculates and outputs a background model
     def create_background_model(self, video_filename):
         no_waiting_frames = self.args["waiting_frames"]
         bcgr_model = {}
@@ -54,7 +56,7 @@ class BackgroundSubtractor(object):
         # show the background model
         create_window("Background Model", self.background_model)
 
-    # this function performs background subtraction on a current frame
+    # this function performs background subtraction on a current frame. It takes a video capture object from OpenCV
     def detect_fish(self, camera):
         grabbed, current_frame = camera.read()
         self.current_frame = current_frame
@@ -68,7 +70,8 @@ class BackgroundSubtractor(object):
             # if no fish found, raise an exception
             raise Exception("Error, fish coordinates list is empty.")
 
-    # function to create contours and points on detected fish
+    # function to create contours and points on detected fish. Takes array of detected contours and
+    # an object of current frame
     def draw_points(self, contours, current_frame):
         # loop over the contours
         for c in contours:
@@ -98,7 +101,7 @@ class BackgroundSubtractor(object):
                     else:
                         cv2.drawContours(current_frame, [box], 0, (0, 0, 255), 2)
 
-    # convert current frame to grey scale and blur it
+    # convert current frame to grey scale and blur it. It takes an object of current frame and returns edited frame
     def convert_to_grey_scale_and_blur(self, current_frame):
         # calculate absolute difference between model and current frame and display it
         difference_image = cv2.absdiff(self.background_model, current_frame)
@@ -111,7 +114,7 @@ class BackgroundSubtractor(object):
         log("Successfully converted to greyscale and blurred.")
         return gray
 
-    # dilate the threshold image to fill in holes, then find contours on threshold image
+    # dilate the threshold image to fill in holes, then find contours on image and return them as a list
     def find_contours(self, thresh):
         im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         log("Successfully found contours.")
@@ -137,7 +140,7 @@ class BackgroundSubtractor(object):
         create_window("Frame", current_frame)
         create_window("Foreground", threshold)
 
-    # check if detected movement is a fish (darker than the background)
+    # check if detected movement is a fish (darker than the background). It takes 2 integers as detected coordinates
     def is_a_bubble(self, xCoord, yCoord):
         # type: (int, int) -> bool
         # if coordinates between x miedzy 1 a 239 and y miedzy 3 a 444 - sprawdz czy kolor ciemnoszary > 50

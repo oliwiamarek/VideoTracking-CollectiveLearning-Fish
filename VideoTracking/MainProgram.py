@@ -1,6 +1,10 @@
 # Oliwia Marek (okm@aber.ac.uk)
 # 25 April 2018
 # This program enables the user to digitize fish position and count the number of fish in different regions of interest.
+# Depending on the flag set in the config file, user will be able to perform a manual or automated detection and
+# counting of the fish.
+# User first is prompt to select the video file and then either has to finish for the background subtraction to
+# automatically perform the task, or have to click on all of the fish in the frame and press 'n' to go to the next frame
 #
 # This file contains the main function of the program.
 

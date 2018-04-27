@@ -1,6 +1,8 @@
 #
 # This file contains the Fish Tracker class. This class is used for manual tracking and counting of the fish.
-# It also has functions for writing to the output files.
+# It also is responsible for calling the background subtractor to perform automated tracking as well as
+# for writing to the output files.
+#
 
 import cv2
 from BackgroundSubtractor import BackgroundSubtractor as BackgroundSubtraction
@@ -24,6 +26,7 @@ class FishTracker(object):
         self.frame_no = 0  # current frame number
         self.bcg_subtractor = BackgroundSubtraction()  # Background Subtractor object
 
+    # takes a string
     def create_background_model(self, path):
         self.bcg_subtractor.create_background_model(path)
         log("Start Fish detection.")
