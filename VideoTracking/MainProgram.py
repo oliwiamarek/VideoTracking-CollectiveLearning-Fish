@@ -5,11 +5,10 @@
 # This file contains the main function of the program.
 
 import cv2
-import os
 import sys
 
 from FishTracker import FishTracker
-from config import MANUAL, close_capture_window, log, get_video_file
+from config import MANUAL, close_capture_window, log, get_video_file, get_name_from_path
 
 '''
 ===========================================================================
@@ -34,15 +33,6 @@ def print_frame_rate(capture):
         print("number of frames = " + "%.2f" % capture.get(7))
     except TypeError:
         print("Capture.get returned type different to float")
-        raise
-
-
-# this function returns a filename from a filepath passed in as a parameter
-def get_name_from_path(path):
-    try:
-        return os.path.splitext(os.path.basename(path))[0]
-    except TypeError:
-        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(path))
         raise
 
 

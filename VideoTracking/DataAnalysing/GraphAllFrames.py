@@ -1,17 +1,22 @@
+#
+# This program takes an output file with fish numbers in each ROI and plots a graph of how many fish are around the
+# food ring in the duration of the whole video (about 120 seconds)
+#
+
 import matplotlib.pyplot as plt
 import csv
 import numpy as np
-import scipy.interpolate as intp
 
-from config import get_csv_file
+from config import get_csv_file, get_name_from_path
 
-ROI_VALUE = 3  # which Region of Interest we want to take into account
+ROI_VALUE = 5  # which Region of Interest we want to take into account
 
 '''
 ===========================================================================
 FUNCTIONS
 ===========================================================================
 '''
+
 
 # read csv file
 def get_data_from(fileName, roi):
@@ -41,7 +46,7 @@ def squish_to_seconds_from(trial_list):
     if modulus > 0:
         del trial_list[-modulus:]
 
-    # Able to take maximum of n items by using numpy array
+    # Able to take average of n items by using numpy array
     trial_numpy = np.array(trial_list)
     return np.max(trial_numpy.reshape(-1, 300), axis=1)
 
@@ -52,19 +57,21 @@ MAIN
 ===========================================================================
 '''
 if __name__ == "__main__":
-    y = np.linspace(0, 119, 119)
-    trial = get_data_from(get_csv_file(), ROI_VALUE)
+    # get path and name of the files
+    filepath = get_csv_file()
+    filename = get_name_from_path(filepath)
+    trial = get_data_from(filepath, ROI_VALUE)
 
     trial_seconds = squish_to_seconds_from(trial)
 
     # plot with various axes scales
     plt.figure(1)
 
-    plt.plot(y, trial_seconds, 'r')
+    plt.plot(trial_seconds, 'r', label=filename)
     plt.axis([0, 120, 0, 18])
     plt.title("Number of fish around food ring during duration of the video")
     plt.ylabel("Number of fish")
     plt.xlabel("Time (s)")
+    plt.legend()
 
     plt.show()
-

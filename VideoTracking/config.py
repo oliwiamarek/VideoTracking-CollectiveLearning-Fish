@@ -8,7 +8,7 @@ import tkFileDialog
 from Tkinter import Tk
 
 import cv2
-
+import os
 
 '''
 ===========================================================================
@@ -130,3 +130,12 @@ def get_filepath(title, file_types_title, file_types_str):
         # restrict to only videos
         video_filepath = tkFileDialog.askopenfilename(title=title, filetypes=[(file_types_title, file_types_str)])
     return video_filepath
+
+
+# this function returns a filename from a filepath passed in as a parameter
+def get_name_from_path(path):
+    try:
+        return os.path.splitext(os.path.basename(path))[0]
+    except TypeError:
+        print("Filepath '{0}' incorrect. Cannot extract the file name.".format(path))
+        raise
