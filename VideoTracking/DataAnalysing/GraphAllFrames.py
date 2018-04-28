@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import csv
 import numpy as np
 
-from config import get_csv_file, get_name_from_path
+from config import get_csv_file, get_name_from_path, smooth
 
 ROI_VALUE = 5  # which Region of Interest we want to take into account
 
@@ -67,7 +67,8 @@ if __name__ == "__main__":
     # plot with various axes scales
     plt.figure(1)
 
-    plt.plot(trial_seconds, 'r', label=filename)
+    # plot smoothed graph to minimize noise
+    plt.plot(smooth(trial_seconds), 'r', label=filename)
     plt.axis([0, 120, 0, 18])
     plt.title("Number of fish around food ring during duration of the video")
     plt.ylabel("Number of fish")

@@ -6,10 +6,10 @@
 import matplotlib.pyplot as plt
 
 from GraphAllFrames import get_data_from, squish_to_seconds_from
-from config import get_csv_file, get_name_from_path
+from config import get_csv_file, get_name_from_path, smooth
 
-FIRST_ROI = 3  # number of region of interest of the first video
-SECOND_ROI = 6  # number of region of interest of the second video
+FIRST_ROI = 6  # number of region of interest of the first video
+SECOND_ROI = 5  # number of region of interest of the second video
 
 '''
 ===========================================================================
@@ -35,8 +35,8 @@ if __name__ == "__main__":
     plt.figure(1)
 
     # create lines and the legend for both outputs
-    line1, = plt.plot(first_output_in_seconds, 'r--', label=first_name)
-    line2, = plt.plot(second_output_in_seconds, 'k', label=second_name)
+    line1, = plt.plot(smooth(first_output_in_seconds), 'r--', label=first_name)
+    line2, = plt.plot(smooth(second_output_in_seconds), 'k', label=second_name)
     legend = plt.legend(loc=2)
     plt.axis([0, 120, 0, 17])
     plt.title("Number of fish around the food ring")
