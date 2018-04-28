@@ -76,7 +76,7 @@ class BackgroundSubtractor(object):
         # loop over the contours
         for c in contours:
             # if the contour is too small, ignore it
-            if is_between(self.args["min_area"], 5000, cv2.contourArea(c)):
+            if is_between(self.args["min_contour_area"], 5000, cv2.contourArea(c)):
                 # compute the bounding box for the contour, draw it on the frame
                 rect = cv2.minAreaRect(c)
                 box = cv2.boxPoints(rect)
@@ -125,7 +125,7 @@ class BackgroundSubtractor(object):
     def use_background_subtraction_on(self, current_frame):
         gray = self.convert_to_grey_scale_and_blur(current_frame)
 
-        # compute the absolute difference between the current frame and background frame
+        # calculate the absolute difference between the current and background frame
         threshold = cv2.dilate(cv2.threshold(gray, 25, 255, cv2.THRESH_BINARY)[1], None, iterations=2)
         contours = self.find_contours(threshold)
 

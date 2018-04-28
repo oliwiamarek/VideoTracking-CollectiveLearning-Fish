@@ -1,6 +1,8 @@
 #
 # This program takes an output file with fish numbers in each ROI and plots a graph of how many fish are around the
 # food ring in the duration of the whole video (about 120 seconds)
+# User has to first change the variable ROI_VALUE. Tt corresponds to which region of interest
+# do we want to consider in the video.
 #
 
 import matplotlib.pyplot as plt

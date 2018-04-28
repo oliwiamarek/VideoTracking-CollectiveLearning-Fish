@@ -52,7 +52,7 @@ def close_capture_window(capture):
 # construct the argument parser and parse the arguments
 def construct_argument_parser():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-a", "--min-area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
+    ap.add_argument("-a", "--min_contour_area", type=int, default=MIN_AREA_SIZE, help="minimum area size for contours")
     ap.add_argument("-f", "--waiting-frames", type=int, default=WAITING_FRAMES,
                     help="number of frames used to calculate bcgr model")
     ap.add_argument("-t", "--threshold", type=float, default=THRESHOLD,
