@@ -19,7 +19,7 @@ from config import get_csv_file, get_name_from_path, smooth
 VARIABLES 
 ===========================================================================
 '''
-ROI = [3,6,5]  # array to store number of region of interest of each of the videos in order
+ROI = [6, 3, 2]  # array to store number of region of interest of each of the videos in order
 NUMBER_OF_FILES = 3
 
 '''
@@ -98,10 +98,10 @@ if __name__ == "__main__":
         output = squish_to_seconds_from(outputs[n])
         print_max_number_between_buzzer_and_food_in(output, filename)
         # create lines and the legend for both outputs
-        plt.plot(smooth(output), linetypes[n], label=filename)
+        plt.plot(smooth(output), linetypes[n], label='ROI {0}'.format(ROI[n]))
     legend = plt.legend(loc=2)
     plt.axis([0, 120, 0, 17])
-    plt.title("Number of fish in ROI with the ring during each experiment")
+    plt.title("Number of fish in ROIs in: {0}".format(filename))
     plt.ylabel("Number of fish")
     plt.xlabel("Time")
 
