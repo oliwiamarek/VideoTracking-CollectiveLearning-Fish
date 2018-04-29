@@ -19,9 +19,8 @@ from config import get_csv_file, get_name_from_path, smooth
 VARIABLES 
 ===========================================================================
 '''
-ROI = [3, 2]  # array to store number of region of interest of each of the videos in order
-NUMBER_OF_FILES = 2
-
+ROI = [3,6,5]  # array to store number of region of interest of each of the videos in order
+NUMBER_OF_FILES = 3
 
 '''
 ===========================================================================
@@ -63,6 +62,13 @@ def squish_to_seconds_from(trial_list):
     return np.max(trial_numpy.reshape(-1, 300), axis=1)
 
 
+def print_max_number_between_buzzer_and_food_in(full_list, file_name):
+    list_copy = full_list.copy()
+    s = slice(60, 70)
+    array = list_copy[s]
+    print("Maximum value during the buzzer vibration in file '{0}' is: {1}".format(file_name, np.max(array)))
+
+
 '''
 ===========================================================================
 MAIN
@@ -72,7 +78,7 @@ MAIN
 if __name__ == "__main__":
     filepaths = []  # array to store all filepaths opened
     outputs = []  # array to store all data read from the files
-    linetypes = ['k', 'r--', ':', 'g-.']  # types of lines in the plotted graphs
+    linetypes = ['k', 'r--', ':', 'g-.', 'c']  # types of lines in the plotted graphs
 
     # for each of the files collect the data
     for n in range(NUMBER_OF_FILES):
@@ -87,10 +93,12 @@ if __name__ == "__main__":
 
     # for each of the files plot the data collected
     for n in range(NUMBER_OF_FILES):
+        filename = get_name_from_path(filepaths[n])
         # modifiy the output to make graph smaller
         output = squish_to_seconds_from(outputs[n])
+        print_max_number_between_buzzer_and_food_in(output, filename)
         # create lines and the legend for both outputs
-        plt.plot(smooth(output), linetypes[n], label=get_name_from_path(filepaths[n]))
+        plt.plot(smooth(output), linetypes[n], label=filename)
     legend = plt.legend(loc=2)
     plt.axis([0, 120, 0, 17])
     plt.title("Number of fish in ROI with the ring during each experiment")
@@ -98,4 +106,3 @@ if __name__ == "__main__":
     plt.xlabel("Time")
 
     plt.show()
-
