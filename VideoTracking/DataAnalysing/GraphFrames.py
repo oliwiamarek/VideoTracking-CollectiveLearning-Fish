@@ -1,6 +1,6 @@
 #
 # This program creates a graph from two files containing information about number of fish in each ROI. It plots a
-# graph showing the comparison between the files.
+# graph showing the comparison between the data.
 # User has to first change the variables ROI and NUMBER_OF_FILES.
 # ROI corresponds to which region of interest do we want to consider in each of the videos.
 # First experiment: 3rd ROI
@@ -20,7 +20,7 @@ VARIABLES
 ===========================================================================
 '''
 ROI = [6, 3, 2]  # array to store number of region of interest of each of the videos in order
-NUMBER_OF_FILES = 3
+NUMBER_OF_FILES = 3  # number of files passed in
 
 '''
 ===========================================================================
@@ -29,30 +29,32 @@ FUNCTIONS
 '''
 
 
-# read csv file
+# read csv file, takes filename as string and the roi number that we want to count
 def get_data_from(fileName, roi):
     # type: (str, int) -> []
-    number_of_fish_in_6_roi = [0]
+    number_of_fish_in_roi = [0]
     # reading csv file
     with open(fileName, 'r') as csv_file:
         # creating a csv reader object
         csv_reader = csv.reader(csv_file)
-
         i = 0
         # extracting each data row one by one
         for row in csv_reader:
+            # only count the ones in the roi which number is passed in
             if str(roi) in row[0]:
-                number_of_fish_in_6_roi[i] += int(row[1])
+                number_of_fish_in_roi[i] += int(row[1])
+            # if the roi is a different number, stop counting current frame
             else:
                 i += 1
-                number_of_fish_in_6_roi.append(0)
-        return number_of_fish_in_6_roi
+                number_of_fish_in_roi.append(0)
+        return number_of_fish_in_roi
 
 
+# modify the data to make the graphs smaller. Shows 120 seconds (2 minutes) and not frames
 def squish_to_seconds_from(trial_list):
     # type: ([]) -> []
-    # To make it present it better, take max from 200 frames.
-    # if it is not dividable by 200, delete number of items equivalent to the modulus.
+    # To make it present it better, take max from 300 frames.
+    # if it is not dividable by 300, delete number of items equivalent to the modulus.
     modulus = len(trial_list) % 300
     if modulus > 0:
         del trial_list[-modulus:]
@@ -76,7 +78,7 @@ MAIN
 '''
 
 if __name__ == "__main__":
-    filepaths = []  # array to store all filepaths opened
+    filepaths = []  # array to store all file paths opened
     outputs = []  # array to store all data read from the files
     linetypes = ['k', 'r--', ':', 'g-.', 'c']  # types of lines in the plotted graphs
 
@@ -89,6 +91,7 @@ if __name__ == "__main__":
         the_output = get_data_from(filepath, ROI[n])
         outputs.append(the_output)
 
+    # create the plot figure
     plt.figure(1)
 
     # for each of the files plot the data collected
@@ -98,11 +101,13 @@ if __name__ == "__main__":
         output = squish_to_seconds_from(outputs[n])
         print_max_number_between_buzzer_and_food_in(output, filename)
         # create lines and the legend for both outputs
-        plt.plot(smooth(output), linetypes[n], label='ROI {0}'.format(ROI[n]))
+        plt.plot(smooth(output), linetypes[n], label=filename)
+
     legend = plt.legend(loc=2)
     plt.axis([0, 120, 0, 17])
-    plt.title("Number of fish in ROIs in: {0}".format(filename))
+    plt.title("Number of fish in ROI with the ring during each experiment")
     plt.ylabel("Number of fish")
     plt.xlabel("Time")
 
+    # display
     plt.show()

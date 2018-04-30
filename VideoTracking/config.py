@@ -1,7 +1,6 @@
 #
-# This file contains all of the global variables and the functions that are being used in multiple files in the project.
+# This file contains all of the global variables and the functions that are being used in multiple places in the project
 #
-
 
 import argparse
 import tkFileDialog
@@ -17,7 +16,7 @@ GLOBAL VARIABLES
 '''
 
 MANUAL = False  # Flag to use the manual or automated version of code
-DEBUG = True  # used to print debug logs
+DEBUG = False  # Flat to print debug logs in the terminal
 WAITING_FRAMES = 900  # default number of frames used to calculate bcgr model
 MIN_AREA_SIZE = 500  # default minimum area size for contours
 THRESHOLD = 0.01  # default value of threshold used in bcgr subtraction average calculation
@@ -31,19 +30,21 @@ GLOBAL FUNCTIONS
 '''
 
 
-# Used for printing out things for debugging purposes
+# Print debug logs in the terminal if the flag is set to true
 def log(s):
     # type: (str) -> type(None)
     if DEBUG:
         print s
 
 
+# displays a window showing passed in object
 def create_window(title, variable):
     # type: (str, object) -> None
     cv2.namedWindow(title, cv2.WINDOW_NORMAL)
     cv2.imshow(title, variable)
 
 
+# closes all windows
 def close_capture_window(capture):
     capture.release()
     cv2.destroyAllWindows()
@@ -77,6 +78,7 @@ def roi_video(current_frame):
 
     # get width and height of the video
     width, height, ch = current_frame.shape
+    # set the ROI boundaries
     roi_width = width / N_ROI_ROWS + 20
     roi_first_height = height / N_ROI_COLUMNS
     roi_second_height = roi_first_height * 2
@@ -125,7 +127,7 @@ def get_filepath(title, file_types_title, file_types_str):
     video_filepath = {}
     root = Tk()
     root.withdraw()
-    # ask for video file
+    # reopens the prompt if no file selected
     while not video_filepath:
         # restrict to only videos
         video_filepath = tkFileDialog.askopenfilename(title=title, filetypes=[(file_types_title, file_types_str)])
@@ -142,52 +144,20 @@ def get_name_from_path(path):
 
 
 # this function was taken from http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
+# this function smooths the graphs created using the matplot library
 def smooth(x, window_len=11, window='hanning'):
-    """smooth the data using a window with requested size.
-
-        This method is based on the convolution of a scaled window with the signal.
-        The signal is prepared by introducing reflected copies of the signal
-        (with the window size) in both ends so that transient parts are minimized
-        in the begining and end part of the output signal.
-
-        input:
-            x: the input signal
-            window_len: the dimension of the smoothing window; should be an odd integer
-            window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
-                flat window will produce a moving average smoothing.
-
-        output:
-            the smoothed signal
-
-        example:
-
-        t=linspace(-2,2,0.1)
-        x=sin(t)+randn(len(t))*0.1
-        y=smooth(x)
-
-        see also:
-
-        numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
-        scipy.signal.lfilter
-
-        TODO: the window parameter could be the window itself if an array instead of a string
-        NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
-        """
-
+    # only continue if there are multiple dimensions and the input vector is bigger than window size
     if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
-
+        raise ValueError("smooth only accepts 1 dimension arrays.")
     if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
-
+        raise ValueError("Input vector needs to be bigger than window size.")
     if window_len < 3:
         return x
 
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
+        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     s = numpy.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
-    # print(len(s))
     if window == 'flat':  # moving average
         w = numpy.ones(window_len, 'd')
     else:

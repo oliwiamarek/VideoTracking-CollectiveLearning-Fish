@@ -19,14 +19,14 @@ FISH TRACKER CLASS
 class FishTracker(object):
     def __init__(self):
         self.current_frame_fish_coord, self.all_fish_coord = [], []  # current and overall list of fish coordinates
-        self.roi_fish_count = []  # count of fish in each of the ROI in every frame
-        self.frame_no_list = []  # list of the frame numbers to be used in the output file creation
+        self.roi_fish_count = []  # count of fish in each ROI in every frame
+        self.frame_no_list = []  # list of the frame numbers
         self.current_frame, self.previous_frame = {}, {}  # variables to store current and previous frame
         self.window_name = "Fishies"  # name of the main window for Manual Tracking
         self.frame_no = 0  # current frame number
         self.bcg_subtractor = BackgroundSubtraction()  # Background Subtractor object
 
-    # takes a string
+    # takes the video file path and creates the background model
     def create_background_model(self, path):
         self.bcg_subtractor.create_background_model(path)
         log("Start Fish detection.")
@@ -36,29 +36,31 @@ class FishTracker(object):
         # normalize size of the window to every screen
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
 
+    # displays frame number and the directions of using the program
     def display_frame_text(self, frame, capture):
         self.frame_no = capture.get(1)
         cv2.putText(frame, 'frame ' + str(self.frame_no), (130, 130), cv2.FONT_HERSHEY_SIMPLEX, 1,
                     (0, 255, 0), 2)
         cv2.putText(self.current_frame, 'Right click to undo', (830, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-    # function to draw the point after clicking on the fish manually. User can right click to undo once.
+    # draw the point after clicking on the fish manually. User can right click to undo once.
     def draw_point(self, event, x, y, flags, params):
         # if left click, draw point
         if event == cv2.EVENT_LBUTTONDOWN:
             self.previous_frame = self.current_frame.copy()
-            cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)
+            cv2.circle(self.current_frame, (x, y), 5, (0, 255, 0), -1)  # draw point
             coord = FishCoordinates(x, y)
-            self.current_frame_fish_coord.append(coord)
+            self.current_frame_fish_coord.append(coord)  # update list of coordinates
         # if right click, undo the previous click
         elif event == cv2.EVENT_RBUTTONDOWN:
             self.current_frame = self.previous_frame.copy()
-            del self.current_frame_fish_coord[-1]
+            del self.current_frame_fish_coord[-1]  # delete last fish coordinate from the list
 
-    # this function loops through coordinates of current frame and counts in which ROI the fish is situated
+    # loop through coordinates of current frame and counts in which ROI the fish is situated
     def get_no_fish_for_ROI(self):
         # type: () -> [int]
         roi = [0, 0, 0, 0, 0, 0]
+        # loop through all fish detected
         for fish in self.current_frame_fish_coord:
             x = fish.getX()
             y = fish.getY()
@@ -79,12 +81,11 @@ class FishTracker(object):
                 roi[4] += 1
             elif y > roi_width() and x > roi_second_height():
                 roi[5] += 1
-
         # add empty row after each frame
         self.all_fish_coord.append("")
         return roi
 
-    # this function is printing the dictionary recursively into a file passed in.
+    # print the dictionary recursively into a file passed in.
     def print_dictionary(self, output_file):
         for f in self.roi_fish_count:
             for key, value in f.items():
@@ -95,6 +96,7 @@ class FishTracker(object):
                     output_file.write('{0},'.format(value))
             output_file.write('\n')
 
+    # track the fish in the current frame
     def track_fish(self, capture):
         # read next frame
         ret, frame = capture.read()
@@ -108,18 +110,19 @@ class FishTracker(object):
             fr_len = len(self.frame_no_list)
             self.display_frame_text(self.current_frame, capture)
 
-            # clicking at fish adds a circular point
+            # clicking at fish adds a circular point on the display
             cv2.setMouseCallback(self.window_name, self.draw_point)
 
+            # if still the same frame display the frame
             while fr_len == len(self.frame_no_list):
                 cv2.imshow(self.window_name, self.current_frame)
-                self.track_fish_through_frames(capture)
+                self.go_to_next_frame(capture)
 
-    # function to update fish lists once key 'n' is pressed to go to the next frame
-    def track_fish_through_frames(self, capture):
+    # update fish lists once key 'n' is pressed to go to the next frame
+    def go_to_next_frame(self, capture):
         # press n to get to next frame
         if cv2.waitKey(1) % 0xFF == ord('n'):
-            #  check if mouse clicked
+            #  if mouse clicked, update the lists
             if 0 < len(self.current_frame_fish_coord):
                 self.frame_no_list.append(capture.get(1))
                 self.update_roi_fish_count()
@@ -128,6 +131,7 @@ class FishTracker(object):
                 cv2.putText(self.current_frame, 'Please first click on a point', (830, 130),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
+    # update the lists that holds the fish count
     def update_roi_fish_count(self):
         roi = self.get_no_fish_for_ROI()
 
@@ -140,7 +144,9 @@ class FishTracker(object):
     # use background subtraction instead of manual tracking and update variables
     def use_background_subtraction(self, cap):
         self.frame_no = cap.get(1)
+        # perform background subtraction and get the coordinates of the fish detected
         current_fish_coord = self.bcg_subtractor.detect_fish(cap)
+        # update the lists if not empty
         if current_fish_coord:
             self.current_frame_fish_coord = current_fish_coord
             self.frame_no_list.append(cap.get(1))

@@ -1,11 +1,10 @@
 #
 # This program creates a graph of maximum number of fish in the region of  interest where the food ring was in each
-# of the weeks in first and second experiment. The variables are hard coded and recorded manually.
+# of the weeks in first and second experiment. The variables are hard coded and were recorded manually.
 #
 
 import matplotlib.pyplot as plt
 
-# plot with various axes scales
 plt.figure(1)
 
 # plot the maximum number with week number.

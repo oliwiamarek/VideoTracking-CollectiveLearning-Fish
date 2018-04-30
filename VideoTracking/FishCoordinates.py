@@ -1,8 +1,6 @@
-"""
-===========================================================================
-FISH COORDINATES CLASS
-===========================================================================
-"""
+#
+# Fish coordinates to be used throughout the program. Stores x and y values of coordinates.
+#
 
 
 class FishCoordinates(object):
@@ -11,10 +9,7 @@ class FishCoordinates(object):
         self.y = y
 
     def getX(self):
-        # Getter method for a Coordinate object's x coordinate.
-        # Getter methods are better practice than just accessing an attribute directly
         return self.x
 
     def getY(self):
-        # Getter method for a Coordinate object's y coordinate
         return self.y

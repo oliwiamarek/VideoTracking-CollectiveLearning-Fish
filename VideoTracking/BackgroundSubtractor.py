@@ -1,7 +1,7 @@
 #
-# This file contains a Background Subtractor class that performs automated detection and counting of the fish.
+# This file contains a Background Subtractor class that performs automated tracking and counting of the fish.
 # It first creates a background model and then subtracts the current frame from it to detect the movement.
-# It also consists of filtering function to get rid of the noise.
+# It also consists of a filtering function to get rid of the noise.
 #
 
 import numpy as np
@@ -27,32 +27,33 @@ class BackgroundSubtractor(object):
         self.fish_coordinates = []  # lists of fish coordinates of current frame
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0  # boundaries of ROI
 
-    # This function takes a filename as a string and calculates and outputs a background model
+    # This function takes a filename as a string and uses it to calculate and output a background model
     def create_background_model(self, video_filename):
         no_waiting_frames = self.args["waiting_frames"]
         bcgr_model = {}
         # start video file/webcam stream
         camera = cv2.VideoCapture(video_filename)
-        print("Calculating the background model. Please wait {0} seconds".format(no_waiting_frames / camera.get(5)))
         ret, frame = camera.read()
         moving_average = np.float32(frame)
+        print("Calculating the background model. Please wait {0} seconds".format(no_waiting_frames / camera.get(5)))
+        # perform creation of the model for number of frames
         for i in range(no_waiting_frames):
             grabbed, current_frame = camera.read()
             # if frame could not be grabbed, we reached the end of video
             if not grabbed:
                 break
             cv2.accumulateWeighted(current_frame, moving_average, self.args["threshold"])
-            # do the drawing stuff
+            # scale and calculates absolute values
             bcgr_model = cv2.convertScaleAbs(moving_average)
             log("Frame number: {0} done successfully.".format(i))
+
         print("Model calculated")
         if bcgr_model is None:
             log("bcgrModel not assigned.")
-            raise NameError("BcgrModel not assigned")
+            raise ValueError("BcgrModel not assigned")
         camera.release()
+        self.background_model = bcgr_model  # store the model
         log("Opened background model window for: {0}".format(bcgr_model))
-        self.background_model = bcgr_model
-        cv2.imwrite("Outputs/backgroundModel.png", bcgr_model)
         # show the background model
         create_window("Background Model", self.background_model)
 
@@ -61,7 +62,7 @@ class BackgroundSubtractor(object):
         grabbed, current_frame = camera.read()
         self.current_frame = current_frame
 
-        # if frame could not be grabbed, we reached the end of video
+        # if frame could not be grabbed, read from buffer, we reached the end of video
         if grabbed:
             roi_video(current_frame)
             self.use_background_subtraction_on(current_frame)
@@ -78,9 +79,10 @@ class BackgroundSubtractor(object):
             # if the contour is too small, ignore it
             if is_between(self.args["min_contour_area"], 5000, cv2.contourArea(c)):
                 # compute the bounding box for the contour, draw it on the frame
+                # code written by following https://docs.opencv.org/3.2.0/dd/d49/tutorial_py_contour_features.html
                 rect = cv2.minAreaRect(c)
-                box = cv2.boxPoints(rect)
-                box = np.int0(box)
+                box = cv2.boxPoints(rect)  # get the coordinates of the corners of rectangle
+                box = np.int0(box)  # create the box
 
                 # use moments to acquire x and y coordinates
                 M = cv2.moments(c)
@@ -118,6 +120,7 @@ class BackgroundSubtractor(object):
     def find_contours(self, thresh):
         im2, contours, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         log("Successfully found contours.")
+        # create contour approximation
         contours = [cv2.approxPolyDP(contour, 0.01, True) for contour in contours]
         return contours
 
@@ -143,7 +146,6 @@ class BackgroundSubtractor(object):
     # check if detected movement is a fish (darker than the background). It takes 2 integers as detected coordinates
     def is_a_bubble(self, xCoord, yCoord):
         # type: (int, int) -> bool
-        # if coordinates between x miedzy 1 a 239 and y miedzy 3 a 444 - sprawdz czy kolor ciemnoszary > 50
         frame_brightness = self.get_brightness_of(self.current_frame, xCoord, yCoord)
         background_brightness = self.get_brightness_of(self.background_model, xCoord, yCoord)
         # if in the dark areas of the video, assume it is a fish
