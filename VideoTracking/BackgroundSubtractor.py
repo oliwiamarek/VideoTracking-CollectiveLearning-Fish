@@ -27,7 +27,7 @@ class BackgroundSubtractor(object):
         self.fish_coordinates = []  # lists of fish coordinates of current frame
         self.roi_mid_width, self.roi_first_height, self.roi_second_height = 0, 0, 0  # boundaries of ROI
 
-    # This function takes a filename as a string and uses it to calculate and output a background model
+    # take a filename as a string and uses it to calculate and output a background model
     def create_background_model(self, video_filename):
         no_waiting_frames = self.args["waiting_frames"]
         bcgr_model = {}
@@ -57,7 +57,7 @@ class BackgroundSubtractor(object):
         # show the background model
         create_window("Background Model", self.background_model)
 
-    # this function performs background subtraction on a current frame. It takes a video capture object from OpenCV
+    # perform background subtraction on a current frame. It takes a video capture object from OpenCV
     def detect_fish(self, camera):
         grabbed, current_frame = camera.read()
         self.current_frame = current_frame
@@ -71,8 +71,7 @@ class BackgroundSubtractor(object):
             # if no fish found, raise an exception
             raise Exception("Error, fish coordinates list is empty.")
 
-    # function to create contours and points on detected fish. Takes array of detected contours and
-    # an object of current frame
+    # draw contours and points on detected fish. Take array of detected contours and an object of current frame
     def draw_points(self, contours, current_frame):
         # loop over the contours
         for c in contours:
