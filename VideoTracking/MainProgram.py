@@ -4,8 +4,8 @@
 # Depending on the flag MANUAL set in the config file, user will be able to perform a manual or automated detection and
 # counting of the fish. There is also DEBUG flag in config file that allows outputting more information during runtime
 # for debugging purposes.
-# User first is prompt to select the video file and then either has to finish for the background subtraction to
-# automatically perform the task, or have to click on all of the fish in the frame and press 'n' to go to the next frame
+# User first is prompt to select the video file and then has to either: wait for the background subtraction to
+# automatically perform the task, or click on all of the fish in the frame and press 'n' to go to the next frame.
 # Program outputs two files: one containing all fish coordinates and one containing the number of fish in each region
 # All code was written by me unless clearly specified.
 #
