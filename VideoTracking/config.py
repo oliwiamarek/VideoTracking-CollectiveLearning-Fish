@@ -15,7 +15,7 @@ GLOBAL VARIABLES
 ===========================================================================
 '''
 
-MANUAL = False  # Flag to use the manual or automated version of code
+MANUAL = True  # Flag to use the manual or automated version of code
 DEBUG = False  # Flat to print debug logs in the terminal
 WAITING_FRAMES = 900  # default number of frames used to calculate bcgr model
 MIN_AREA_SIZE = 500  # default minimum area size for contours
